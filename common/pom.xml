@@ -7,10 +7,10 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>agentServer</artifactId>
+    <artifactId>common</artifactId>
     <packaging>jar</packaging>
 
-    <name>agentServer</name>
+    <name>common</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -18,20 +18,5 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.lance</groupId>
-            <artifactId>nacos</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.lance.agent</groupId>
-            <artifactId>mcp</artifactId>
-        </dependency>
-
-
-        <!-- Spring Boot Starter Web -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
     </dependencies>
 </project>

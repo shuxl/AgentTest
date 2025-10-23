@@ -14,3 +14,6 @@ spring:
 #            server2:
 #              url: http://otherserver:8081
 #              sse-endpoint: /custom-sse
+
+server:
+  port: 9093

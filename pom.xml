@@ -23,6 +23,7 @@
         <module>security</module>
         <module>agentServer</module>
         <module>mcpClient</module>
+        <module>common</module>
     </modules>
 
     <properties>
