@@ -1,0 +1,55 @@
+# Nacos配置中心配置文件 - UAT环境默认配置
+# 此文件专门用于连接UAT环境的Nacos配置中心
+
+spring:
+  cloud:
+    nacos:
+      # 服务发现配置
+      discovery:
+        # UAT环境Nacos服务器地址
+        server-addr: mse-4e0990b0-nacos-ans.mse.aliyuncs.com:8848
+        # UAT环境命名空间ID
+        namespace: e66c67ce-8e0f-4962-a40f-12a44c15a75d
+        # 是否启用服务注册 - UAT环境关闭注册
+        register-enabled: false
+        # 服务名称
+        service: ${spring.application.name:pd-chat}
+#        # 服务分组
+#        group: DEFAULT_GROUP
+#        # 服务实例权重
+#        weight: 1
+#        # 健康检查间隔（毫秒）
+#        heart-beat-interval: 5000
+#        # 健康检查超时时间（毫秒）
+#        heart-beat-timeout: 15000
+#        # IP删除超时时间（毫秒）
+#        ip-delete-timeout: 30000
+
+      # 配置中心配置
+      config:
+        # 配置前缀 - 通常与应用名称一致
+        prefix: pd-chat
+        # 配置文件扩展名
+        file-extension: yaml
+        # UAT环境Nacos服务器地址
+        server-addr: mse-4e0990b0-nacos-ans.mse.aliyuncs.com:8848
+        # UAT环境命名空间ID
+        namespace: e66c67ce-8e0f-4962-a40f-12a44c15a75d
+        accessKey: ${NACOS_ACCESS_KEY_UAT}
+        secretKey: ${NACOS_SECRET_KEY_UAT}
+#        # 是否启用配置刷新
+#        refresh-enabled: true
+#        # 是否启用配置中心
+#        enabled: true
+#        # 配置分组
+#        group: DEFAULT_GROUP
+        # 共享配置文件列表
+        shared-configs:
+          # UAT环境主配置文件
+          - dataId: pd-chat-uat.yaml
+            group: DEFAULT_GROUP
+#            refresh: true
+          # 企业微信服务配置文件
+          - dataId: wecom-service.yaml
+            group: DEFAULT_GROUP
+#            refresh: true

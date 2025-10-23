@@ -1,0 +1,18 @@
+#配置服务器信息
+server:
+  port: 9092
+  servlet:
+    session:
+      cookie:
+        name: WEATHER_MCP_SERVER_SESSION
+spring:
+  application:
+    name: pd-chat
+  profiles:
+    active: nacos  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+    banner-mode: off
+  aop:
+    proxy-target-class: true
