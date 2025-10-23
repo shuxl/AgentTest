@@ -22,6 +22,10 @@
             <groupId>com.lance</groupId>
             <artifactId>nacos</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.lance.agent</groupId>
+            <artifactId>mcp</artifactId>
+        </dependency>
 
 
         <!-- Spring Boot Starter Web -->

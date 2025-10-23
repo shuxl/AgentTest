@@ -4,15 +4,22 @@ server:
   servlet:
     session:
       cookie:
-        name: WEATHER_MCP_SERVER_SESSION
+        name: SHUXL_MCP_SERVER_SESSION
 spring:
   application:
     name: pd-chat
   profiles:
-    active: nacos  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
+    active: nacos, mcp  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
     banner-mode: off
   aop:
     proxy-target-class: true
+  mcp:
+    server:
+      name: shuxl-mcp-server
+      version: 0.0.1
+      sse-message-endpoint: /mcp/message
+      protocol: STREAMABLE
+
