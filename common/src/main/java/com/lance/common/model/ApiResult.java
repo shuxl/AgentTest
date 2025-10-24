@@ -2,7 +2,6 @@ package com.lance.common.model;
 
 import com.lance.common.enums.CodeEnum;
 import com.lance.common.exception.IError;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;

@@ -1,5 +1,7 @@
 package com.lance.common.enums;
 
+import lombok.Getter;
+
 /**
  * 通用状态码枚举
  * <p>
@@ -9,6 +11,7 @@ package com.lance.common.enums;
  * @author xiaolong.shu
  * @date 2025年10月24日 11:20
  */
+@Getter
 public enum CodeEnum {
     SUCCESS(0, "SUCCESS"),
     ERROR(1, "ERROR");
