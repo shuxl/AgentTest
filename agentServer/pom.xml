@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>agentServer</artifactId>
+    <version>${com.lance.model.version}</version>
     <packaging>jar</packaging>
 
     <name>agentServer</name>
@@ -23,14 +24,24 @@
             <artifactId>nacos</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.lance.agent</groupId>
+            <groupId>com.lance</groupId>
             <artifactId>mcp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.lance</groupId>
+            <artifactId>common</artifactId>
         </dependency>
 
         <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
     </dependencies>
 </project>

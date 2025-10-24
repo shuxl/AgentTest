@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>security</artifactId>
+    <version>${com.lance.model.version}</version>
     <packaging>jar</packaging>
 
     <name>security</name>

@@ -2,6 +2,7 @@ package com.lance.common.model;
 
 import com.lance.common.enums.CodeEnum;
 import com.lance.common.exception.IError;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -20,18 +21,13 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Accessors(chain = true)
 public class ApiResult<T> implements Serializable {
 
     private Integer code;
     private String msg;
     private T data;
-    
-    public ApiResult(Integer code, String msg, T data) {
-        this.code = code;
-        this.msg = msg;
-        this.data = data;
-    }
 
     public static <T> ApiResult<T> success() {
         return new ApiResult<>(CodeEnum.SUCCESS.getCode(), CodeEnum.SUCCESS.getDesc(), null);

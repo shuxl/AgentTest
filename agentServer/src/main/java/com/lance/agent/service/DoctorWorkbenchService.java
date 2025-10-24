@@ -22,6 +22,7 @@ public class DoctorWorkbenchService {
      * @return 绑定的医生ID
      */
     public Object getBindDoctorId(Long patientId) {
-        return doctorWorkbenchServiceApi.getBindDoctorId(patientId);
+        var result = doctorWorkbenchServiceApi.getBindDoctorId(patientId);
+        return  result;
     }
 }

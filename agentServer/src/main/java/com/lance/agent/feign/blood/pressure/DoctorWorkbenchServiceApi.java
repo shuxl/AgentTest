@@ -1,6 +1,7 @@
 
 package com.lance.agent.feign.blood.pressure;
 
+import com.lance.common.model.ApiResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,5 +26,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface DoctorWorkbenchServiceApi {
 
     @GetMapping({"getBindDoctorId"})
-    Object getBindDoctorId(@RequestParam("patientId") Long var1);
+    ApiResult<Long> getBindDoctorId(@RequestParam("patientId") Long var1);
 }

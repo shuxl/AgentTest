@@ -9,6 +9,7 @@
 
     <artifactId>common</artifactId>
     <packaging>jar</packaging>
+    <version>${com.lance.model.version}</version>
 
     <name>common</name>
     <url>http://maven.apache.org</url>
@@ -22,7 +23,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
         </dependency>
         
         <!-- Apache Commons Lang3依赖，用于字符串工具类 -->
@@ -37,5 +37,6 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
     </dependencies>
 </project>

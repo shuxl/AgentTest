@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>mcpClient</artifactId>
+    <version>${com.lance.model.version}</version>
     <packaging>jar</packaging>
 
     <name>mcpClient</name>
