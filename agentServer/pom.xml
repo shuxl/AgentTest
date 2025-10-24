@@ -27,7 +27,6 @@
             <artifactId>mcp</artifactId>
         </dependency>
 
-
         <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
