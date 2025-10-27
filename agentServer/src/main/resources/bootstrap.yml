@@ -9,7 +9,7 @@ spring:
   application:
     name: pd-chat
   profiles:
-    active: nacos, mcp  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
+    active: nacos, mcp, mybatis  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
@@ -22,9 +22,9 @@ spring:
       version: 0.0.1
       sse-message-endpoint: /mcp/message
       protocol: STREAMABLE
-
-## application-dev.yml
-#logging:
-#  level:
-#    # 项目内所有Feign客户端使用DEBUG级别
-#    com.lance.agent.feign: DEBUG
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    #    url: jdbc:p6spy:mysql://rm-uf6783lqjx38121mq.mysql.rds.aliyuncs.com:3306/gezhi-uat_pd-chat?...
+    url: jdbc:p6spy:mysql://rm-uf6783lqjx38121mq.mysql.rds.aliyuncs.com:3306/gezhi-uat_pd-chat?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&serverTimezone=GMT%2b8&useSSL=false
+    #    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
