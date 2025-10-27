@@ -1,0 +1,27 @@
+
+# MyBatis 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  type-aliases-package: com.lance.agent.model
+
+# MyBatis 启动检查配置（开发环境可禁用）
+mybatis:
+  boot:
+    check:
+      enable: true
+      block: false
+
+
+# 日志配置
+#logging:
+#  level:
+#    # 数据源连接信息
+#    com.zaxxer.hikari: DEBUG
+    # MyBatis SQL 执行日志
+    #    com.lance.agent.mapper: DEBUG
+    # MyBatis 详细日志（包含参数）
+    #    org.apache.ibatis: DEBUG
+    # 项目内所有Feign客户端使用DEBUG级别
+    # com.lance.agent.feign: DEBUG

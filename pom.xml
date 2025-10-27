@@ -24,6 +24,7 @@
         <module>agentServer</module>
         <module>mcpClient</module>
         <module>common</module>
+        <module>mybatis</module>
     </modules>
 
     <properties>
@@ -53,6 +54,11 @@
             <dependency>
                 <groupId>com.lance</groupId>
                 <artifactId>common</artifactId>
+                <version>${com.lance.model.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lance</groupId>
+                <artifactId>mybatis</artifactId>
                 <version>${com.lance.model.version}</version>
             </dependency>
 
