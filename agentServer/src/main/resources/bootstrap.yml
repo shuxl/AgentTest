@@ -9,7 +9,7 @@ spring:
   application:
     name: pd-chat
   profiles:
-    active: nacos, mcp, mybatis  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
+    active: nacos, mcp, mybatis, models  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
