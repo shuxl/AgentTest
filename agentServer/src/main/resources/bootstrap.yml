@@ -9,19 +9,13 @@ spring:
   application:
     name: pd-chat
   profiles:
-    active: nacos, mcp, mybatis, models  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
+    active: nacos, mcp, mybatis, chat  # 激活 nacos profile，会自动加载 bootstrap-nacos.yml
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
     banner-mode: off
   aop:
     proxy-target-class: true
-  mcp:
-    server:
-      name: shuxl-mcp-server
-      version: 0.0.1
-      sse-message-endpoint: /mcp/message
-      protocol: STREAMABLE
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     #    url: jdbc:p6spy:mysql://rm-uf6783lqjx38121mq.mysql.rds.aliyuncs.com:3306/gezhi-uat_pd-chat?...
