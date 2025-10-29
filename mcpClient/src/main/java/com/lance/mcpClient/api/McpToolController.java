@@ -1,4 +1,4 @@
-package com.lance.api;
+package com.lance.mcpClient.api;
 
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;

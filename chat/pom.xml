@@ -7,11 +7,10 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mcpClient</artifactId>
-    <version>${com.lance.model.version}</version>
+    <artifactId>chat</artifactId>
     <packaging>jar</packaging>
 
-    <name>mcpClient</name>
+    <name>chat</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -19,20 +18,15 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.lance</groupId>
-            <artifactId>chat</artifactId>
-        </dependency>
+        <!-- Spring AI deepseek -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-mcp-client</artifactId>
+            <artifactId>spring-ai-starter-model-deepseek</artifactId>
         </dependency>
-
-        <!-- Spring Boot Starter Web -->
+        <!-- Spring AI zhipuai -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-zhipuai</artifactId>
         </dependency>
-
     </dependencies>
 </project>

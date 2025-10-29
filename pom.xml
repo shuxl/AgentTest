@@ -25,6 +25,7 @@
         <module>mcpClient</module>
         <module>common</module>
         <module>mybatis</module>
+        <module>chat</module>
     </modules>
 
     <properties>
@@ -59,6 +60,11 @@
             <dependency>
                 <groupId>com.lance</groupId>
                 <artifactId>mybatis</artifactId>
+                <version>${com.lance.model.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lance</groupId>
+                <artifactId>chat</artifactId>
                 <version>${com.lance.model.version}</version>
             </dependency>
 

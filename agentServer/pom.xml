@@ -35,6 +35,10 @@
             <groupId>com.lance</groupId>
             <artifactId>mybatis</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.lance</groupId>
+            <artifactId>chat</artifactId>
+        </dependency>
 
         <!-- Spring Boot Starter Web -->
         <dependency>
