@@ -1,4 +1,4 @@
-package com.lance.agent.config;
+package com.lance.agent.configuration;
 
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
@@ -10,5 +10,5 @@ import org.springframework.context.annotation.Configuration;
 @EnableFeignClients(basePackages = {
         "com.lance.agent.feign.**"
 })
-public class AgentFeignConfig {
+public class AgentFeignConfiguration {
 }

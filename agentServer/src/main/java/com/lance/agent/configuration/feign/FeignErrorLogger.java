@@ -1,4 +1,4 @@
-package com.lance.agent.config.feign;
+package com.lance.agent.configuration.feign;
 
 import feign.Response;
 import feign.codec.ErrorDecoder;

@@ -1,0 +1,16 @@
+alibaba:
+  cloud:
+    access_key:
+      id: ${ALIBABA_CLOUD_ACCESS_KEY_ID}
+      secret: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET}
+    adb_pg:
+      instance_id: gp-uf61vxz71jd74p5a5
+      region: cn-shanghai
+      endPoint: gpdb.aliyuncs.com
+  vector:
+    db_manager:
+      account: test_db
+      password: ${VECTOR_DB_MANAGER_PASSWORD}
+    namespace:
+      name: ns251016
+      password: ${VECTOR_DB_NAMESPACE_PASSWORD}
