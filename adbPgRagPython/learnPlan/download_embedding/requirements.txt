@@ -1,0 +1,15 @@
+# PgVector 学习项目依赖包
+
+# PostgreSQL 驱动
+psycopg2-binary>=2.9.9
+
+# 向量计算
+numpy>=1.24.0
+
+# 文本向量化模型
+sentence-transformers>=2.2.2
+
+# 可选：如果需要使用 transformers 底层库
+# transformers>=4.30.0
+# torch>=2.0.0
+

@@ -1,0 +1,11 @@
+# PgVector 学习项目依赖包
+
+# PostgreSQL 驱动
+psycopg2-binary>=2.9.9
+
+# 向量计算
+numpy>=1.24.0
+
+# 文本向量化模型（模型已下载，这里只是声明依赖）
+sentence-transformers>=2.2.2
+
