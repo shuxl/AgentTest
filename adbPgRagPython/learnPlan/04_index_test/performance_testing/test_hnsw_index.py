@@ -161,13 +161,51 @@ def get_table_stats(client: PgVectorClient, table_name: str):
     count_result = client.execute_query(count_query)
     count = count_result[0]['count'] if count_result else 0
     
-    dim_query = f"""
-    SELECT array_length((embedding::text::float[]), 1) as dim
-    FROM {table_name}
-    LIMIT 1;
-    """
-    dim_result = client.execute_query(dim_query)
-    dimension = dim_result[0]['dim'] if dim_result else 0
+    # 方法1：从实际数据中解析向量维度（最可靠）
+    # 因为表定义可能没有指定维度，所以直接从数据中获取最准确
+    dimension = 0
+    try:
+        sample_query = f"""
+        SELECT 
+            array_length(
+                string_to_array(
+                    trim(both '[]' from embedding::text),
+                    ','
+                ),
+                1
+            ) as dim
+        FROM {table_name}
+        WHERE embedding IS NOT NULL
+        LIMIT 1;
+        """
+        sample_result = client.execute_query(sample_query)
+        if sample_result and sample_result[0]['dim']:
+            dimension = int(sample_result[0]['dim'])
+    except Exception:
+        pass
+    
+    # 方法2：如果方法1失败，从系统表查询列的类型定义（后备方案）
+    if dimension == 0:
+        try:
+            # pgvector 的 vector 类型：对于 vector(n)，atttypmod = n * 8 + 4
+            # 对于 vector（无维度限制），atttypmod = -1
+            dim_query = f"""
+            SELECT 
+                CASE 
+                    WHEN atttypmod = -1 THEN NULL  -- 可变维度
+                    WHEN atttypmod > 0 THEN (atttypmod - 4) / 8  -- 固定维度：atttypmod = 维度 * 8 + 4
+                    ELSE NULL
+                END as dim
+            FROM pg_attribute 
+            WHERE attrelid = '{table_name}'::regclass 
+              AND attname = 'embedding'
+              AND NOT attisdropped;
+            """
+            dim_result = client.execute_query(dim_query)
+            if dim_result and len(dim_result) > 0 and dim_result[0]['dim'] is not None:
+                dimension = int(dim_result[0]['dim'])
+        except Exception:
+            dimension = 0
     
     size_query = f"""
     SELECT pg_size_pretty(pg_total_relation_size('{table_name}')) as size,

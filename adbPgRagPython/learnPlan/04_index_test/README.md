@@ -105,8 +105,17 @@
 
 #### 1.1 理解向量索引原理
 - [ ] 阅读 HNSW（Hierarchical Navigable Small World）算法原理
+  - 📚 **本地文档**：[HNSW算法原理详解](./学习资料/HNSW算法原理详解.md) ⭐ 推荐优先阅读
+  - 📄 **原始论文**：[Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs](https://arxiv.org/abs/1603.09320)
+  - 📖 **重点理解**：分层导航小世界图结构，m 和 ef_construction 参数的物理意义
 - [ ] 阅读 IVFFlat（Inverted File Index）算法原理
+  - 📚 **本地文档**：[IVFFlat算法原理详解](./学习资料/IVFFlat算法原理详解.md) ⭐ 推荐优先阅读
+  - 📄 **相关论文**：[Product Quantization for Nearest Neighbor Search](https://ieeexplore.ieee.org/document/5432202)
+  - 📄 **官方文档**：[pgvector IVFFlat 说明](https://github.com/pgvector/pgvector#ivfflat)
+  - 📖 **重点理解**：倒排索引和聚类机制，lists 和 probes 参数的选择原则
 - [ ] 理解不同距离度量方式（余弦、欧氏、内积）对索引的影响
+  - 📚 **本地文档**：[向量距离度量详解](./学习资料/向量距离度量详解.md) ⭐ 推荐优先阅读
+  - 📖 **重点理解**：三种距离度量的数学原理、适用场景和选择原则
 
 #### 1.2 环境准备
 - [ ] 确保 PostgreSQL + pgvector 环境就绪
@@ -145,8 +154,9 @@ python generate_test_data.py --count 5000 --dimension 768 --type random
 
 **实践任务**：
 ```bash
-# 创建 HNSW 索引并测试性能
-python test_hnsw_index.py --data-size 50000 --m 16 --ef-construction 64
+# 首先确保表中有数据（使用 generate_test_data.py 生成）
+# 然后创建 HNSW 索引并测试性能
+python performance_testing/test_hnsw_index.py --m 16 --ef-construction 64
 ```
 
 ---
@@ -171,8 +181,9 @@ python test_hnsw_index.py --data-size 50000 --m 16 --ef-construction 64
 
 **实践任务**：
 ```bash
-# 创建 IVFFlat 索引并测试性能
-python test_ivfflat_index.py --data-size 100000 --lists 100
+# 首先确保表中有数据（建议至少 1000 条）
+# 然后创建 IVFFlat 索引并测试性能
+python performance_testing/test_ivfflat_index.py --lists 100 --probes 10
 ```
 
 ---
@@ -202,8 +213,8 @@ python test_ivfflat_index.py --data-size 100000 --lists 100
 
 **实践任务**：
 ```bash
-# 运行完整的性能对比测试
-python benchmark_indexes.py --data-size 50000 --compare-all
+# 运行完整的性能对比测试（对比无索引、HNSW、IVFFlat）
+python performance_testing/benchmark_indexes.py --table-name index_test_items
 ```
 
 ---
@@ -232,8 +243,11 @@ python benchmark_indexes.py --data-size 50000 --compare-all
 
 **实践任务**：
 ```bash
-# 参数网格搜索
-python optimize_index_params.py --data-size 100000 --method grid-search
+# 参数网格搜索（如果实现了 optimize_index_params.py 工具）
+# 可以手动测试不同的参数组合，记录性能结果
+python performance_testing/test_hnsw_index.py --m 16 --ef-construction 64
+python performance_testing/test_hnsw_index.py --m 32 --ef-construction 128
+# ... 测试更多组合
 ```
 
 ---
@@ -258,7 +272,11 @@ python optimize_index_params.py --data-size 100000 --method grid-search
 **实践任务**：
 ```bash
 # 使用真实数据测试
-python test_with_real_data.py --data-source wikipedia --count 500000
+# 1. 生成或导入真实文本数据并向量化
+python data_generation/generate_text_vectors.py --source wikipedia --count 500000
+
+# 2. 在真实数据上测试索引性能
+python performance_testing/benchmark_indexes.py --table-name real_data_table
 ```
 
 ---
@@ -335,43 +353,53 @@ python generate_text_vectors.py \
 测试 HNSW 索引性能
 
 ```bash
-python test_hnsw_index.py \
-    --data-size 50000 \
+python performance_testing/test_hnsw_index.py \
+    --table-name index_test_items \
     --m 16 \
     --ef-construction 64 \
     --ef-search 40
 ```
 
+**注意**：脚本会自动从表中读取数据量和向量维度，无需指定 `--data-size`。
+
 #### `test_ivfflat_index.py`
 测试 IVFFlat 索引性能
 
 ```bash
-python test_ivfflat_index.py \
-    --data-size 100000 \
+python performance_testing/test_ivfflat_index.py \
+    --table-name index_test_items \
     --lists 100 \
     --probes 10
 ```
 
+**注意**：
+- 脚本会自动从表中读取数据量和向量维度
+- IVFFlat 索引建议至少 1000 条数据（lists 默认为 rows/1000）
+
 #### `benchmark_indexes.py`
-对比不同索引的性能
+对比不同索引的性能（自动对比无索引、HNSW、IVFFlat）
 
 ```bash
-python benchmark_indexes.py \
-    --data-size 50000 \
-    --compare-all \           # 对比所有索引类型
-    --output results/benchmark_50000.json
+python performance_testing/benchmark_indexes.py \
+    --table-name index_test_items \
+    --output results/benchmarks/benchmark_results.json
 ```
+
+**说明**：
+- 脚本会自动对比三种情况：无索引、HNSW 索引、IVFFlat 索引
+- 可通过 `--hnsw-m`、`--hnsw-ef-construction` 等参数调整索引参数
 
 ### 3. 优化工具
 
 #### `optimize_index_params.py`
-自动优化索引参数
+自动优化索引参数（如果存在此工具）
 
 ```bash
-python optimize_index_params.py \
-    --data-size 100000 \
-    --method grid-search \    # 网格搜索
-    --metric recall@10        # 优化目标：召回率@10
+# 注意：此工具可能需要根据实际需求实现
+python optimization/optimize_index_params.py \
+    --table-name index_test_items \
+    --method grid-search \
+    --metric recall@10
 ```
 
 ---
@@ -492,13 +520,18 @@ python data_generation/generate_test_data.py --count 5000 --dimension 768 --tabl
 ### 4. 创建并测试索引
 
 ```bash
-python performance_testing/test_hnsw_index.py --data-size 5000 --m 16
+# 测试 HNSW 索引
+python performance_testing/test_hnsw_index.py --m 16 --ef-construction 64
+
+# 测试 IVFFlat 索引（需要先删除 HNSW 索引）
+python performance_testing/test_ivfflat_index.py --lists 100
 ```
 
 ### 5. 运行性能对比
 
 ```bash
-python performance_testing/benchmark_indexes.py --data-size 50000
+# 对比所有索引类型的性能
+python performance_testing/benchmark_indexes.py --table-name index_test_items
 ```
 
 ---
