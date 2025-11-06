@@ -1,0 +1,40 @@
+# V2.0 多智能体路由系统依赖包
+
+# LangGraph和LangChain
+langgraph>=0.2.0,<1.0.0  # 注意：langgraph 1.0+ 版本 API 发生变化，需使用 0.x 版本
+langchain>=0.3.0,<1.0.0  # 注意：langchain 1.0+ 版本与 langgraph 0.x 不兼容，需使用 0.x 版本
+langchain-core>=0.3.0,<1.0.0  # 需与 langchain 0.x 版本匹配
+langchain-openai>=0.2.0,<0.3.0  # OpenAI 兼容接口支持（DeepSeek 等），需与 langchain-core 0.3.x 匹配
+langchain-community>=0.3.0,<1.0.0  # LangChain 社区扩展
+langgraph-checkpoint-postgres>=2.0.0  # PostgreSQL checkpoint 和 store 支持
+langgraph-prebuilt>=0.6.0,<1.0.0  # langgraph.prebuilt.create_react_agent 支持，需与 langgraph 0.x 版本匹配
+
+# FastAPI和Web框架
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# 数据库
+psycopg[binary,pool]>=3.1.0
+asyncpg>=0.29.0  # 可选，如果使用asyncpg
+
+# SQLAlchemy（数据库ORM，用于数据库包升级改造）
+sqlalchemy>=2.0.0,<3.0.0  # SQLAlchemy 2.0+ 异步版本
+greenlet>=3.0.0  # SQLAlchemy 异步功能必需依赖
+alembic>=1.13.0  # 数据库迁移工具
+
+# Redis
+redis>=5.0.0
+
+# 日志
+concurrent-log-handler>=0.9.20
+
+# 其他工具
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# HTTP客户端（前端客户端使用）
+requests>=2.31.0
+
+# 命令行界面美化（前端客户端使用）
+rich>=13.0.0
+
