@@ -1,16 +1,27 @@
 """
-复诊管理工具实现
+复诊管理工具实现（使用 SQLAlchemy ORM）
 包含appointment_booking、query_appointment、update_appointment工具
 使用PostgreSQL数据库表appointments存储
+
+注意：
+- 已重构为使用 SQLAlchemy ORM，不再直接使用 psycopg
+- pool 参数保留以保持接口兼容性，但内部不再使用
+- 所有数据库操作通过 SQLAlchemy 的 CRUDBase 进行
 """
 import logging
 from typing import Optional
 from langchain_core.tools import tool
 from datetime import datetime
-from psycopg_pool import AsyncConnectionPool
+from psycopg_pool import AsyncConnectionPool  # 保留以保持接口兼容性
 from langgraph.store.postgres import AsyncPostgresStore
 
+# SQLAlchemy 相关导入
+from ..db import get_async_session, Appointment, CRUDBase
+
 logger = logging.getLogger(__name__)
+
+# 创建 CRUD 实例
+crud_appointment = CRUDBase(Appointment)
 
 
 async def parse_datetime_with_llm(date_str: Optional[str], llm=None) -> tuple[str, str, str]:
@@ -169,10 +180,10 @@ def validate_appointment_date(appointment_date: datetime) -> tuple[bool, str]:
 
 def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Optional[AsyncPostgresStore] = None):
     """
-    创建复诊管理相关的工具
+    创建复诊管理相关的工具（使用 SQLAlchemy ORM）
     
     Args:
-        pool: PostgreSQL数据库连接池实例，用于访问appointments表
+        pool: PostgreSQL数据库连接池实例（保留以保持接口兼容性，实际使用 SQLAlchemy）
         user_id: 用户ID
         store: PostgreSQL Store实例（可选），用于查询用户设置信息（长期记忆）
     
@@ -189,7 +200,7 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
         notes: Optional[str] = None
     ) -> str:
         """
-        创建复诊预约
+        创建复诊预约（使用 SQLAlchemy ORM）
         
         Args:
             department: 科室名称
@@ -211,7 +222,7 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
             timestamp, date, _ = await parse_datetime_with_llm(appointment_date, llm)
             logger.info(f"[appointment_booking] 日期时间解析结果: timestamp={timestamp}, date={date}")
             
-            # 将ISO格式的时间戳转换为PostgreSQL TIMESTAMP格式
+            # 将ISO格式的时间戳转换为datetime对象
             try:
                 if 'Z' in timestamp:
                     appointment_datetime = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
@@ -230,60 +241,27 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
                 return validation_msg
             
             logger.info(f"[appointment_booking] 开始数据库插入操作")
-            # 插入到数据库表
-            # 注意：连接池默认autocommit=True，我们直接使用连接，不需要显式事务
-            appointment_id = None
-            async with pool.connection() as conn:
-                logger.info(f"[appointment_booking] 获取数据库连接成功，autocommit={conn.autocommit}")
-                async with conn.cursor() as cur:
-                    logger.info(f"[appointment_booking] 准备执行INSERT语句: user_id={user_id}, department={department}, "
-                               f"appointment_datetime={appointment_datetime}")
-                    await cur.execute("""
-                        INSERT INTO appointments 
-                        (user_id, department, doctor_id, doctor_name, appointment_date, status, notes)
-                        VALUES (%s, %s, %s, %s, %s, 'pending', %s)
-                        RETURNING id
-                    """, (user_id, department, doctor_id, doctor_name, appointment_datetime, notes or ""))
-                    
-                    result = await cur.fetchone()
-                    appointment_id = result['id'] if result else None
-                    logger.info(f"[appointment_booking] INSERT执行完成，返回的ID: {appointment_id}")
-                    
-                    if not appointment_id:
-                        logger.error(f"[appointment_booking] 严重错误：INSERT未返回ID！")
-                        return f"创建预约失败：数据库未返回预约ID"
-                
-                # 验证插入是否成功（使用同一个连接，但重新获取cursor）
-                logger.info(f"[appointment_booking] 开始验证插入结果，appointment_id={appointment_id}")
-                if appointment_id:
-                    async with conn.cursor() as cur:
-                        await cur.execute("""
-                            SELECT id, user_id, department, appointment_date, status
-                            FROM appointments 
-                            WHERE id = %s AND user_id = %s
-                        """, (appointment_id, user_id))
-                        verify_result = await cur.fetchone()
-                        if verify_result:
-                            logger.info(f"[appointment_booking] 验证成功: 预约记录已插入，ID={verify_result['id']}, "
-                                      f"user_id={verify_result['user_id']}, department={verify_result['department']}, "
-                                      f"appointment_date={verify_result['appointment_date']}, status={verify_result['status']}")
-                        else:
-                            logger.error(f"[appointment_booking] 严重错误：插入后无法查询到记录，ID={appointment_id}, user_id={user_id}")
-            
-            # 使用新连接再次验证（确保数据已持久化）
-            logger.info(f"[appointment_booking] 使用新连接进行最终验证")
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        SELECT id, user_id, department, appointment_date, status
-                        FROM appointments 
-                        WHERE id = %s AND user_id = %s
-                    """, (appointment_id, user_id))
-                    final_verify = await cur.fetchone()
-                    if final_verify:
-                        logger.info(f"[appointment_booking] 最终验证成功: ID={final_verify['id']}")
-                    else:
-                        logger.error(f"[appointment_booking] 最终验证失败：无法查询到记录！")
+            # 使用 SQLAlchemy ORM 创建记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                try:
+                    db_obj = await crud_appointment.create(
+                        session,
+                        {
+                            "user_id": user_id,
+                            "department": department,
+                            "doctor_id": doctor_id,
+                            "doctor_name": doctor_name,
+                            "appointment_date": appointment_datetime,
+                            "status": "pending",
+                            "notes": notes or ""
+                        }
+                    )
+                    await session.commit()
+                    appointment_id = db_obj.id
+                except Exception as e:
+                    await session.rollback()
+                    raise
             
             logger.info(f"[appointment_booking] 成功为用户 {user_id} 创建预约: ID={appointment_id}, "
                        f"department={department}, appointment_date={appointment_datetime}")
@@ -308,7 +286,7 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
         limit: int = 10
     ) -> str:
         """
-        查询用户的复诊预约记录
+        查询用户的复诊预约记录（使用 SQLAlchemy ORM）
         
         Args:
             status: 预约状态（pending/completed/cancelled），可选
@@ -324,36 +302,27 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
             if status and status not in ['pending', 'completed', 'cancelled']:
                 return f"无效的状态值：{status}。有效状态：pending（待处理）、completed（已完成）、cancelled（已取消）。"
             
-            # 从数据库表查询数据
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    # 构建查询SQL
-                    query = """
-                        SELECT id, department, doctor_id, doctor_name, appointment_date, status, notes, created_at
-                        FROM appointments
-                        WHERE user_id = %s
-                    """
-                    params = [user_id]
-                    
-                    # 添加状态过滤条件
-                    if status:
-                        query += " AND status = %s"
-                        params.append(status)
-                    
-                    # 添加时间过滤条件
-                    if start_date:
-                        query += " AND DATE(appointment_date) >= %s"
-                        params.append(start_date)
-                    if end_date:
-                        query += " AND DATE(appointment_date) <= %s"
-                        params.append(end_date)
-                    
-                    # 按时间排序（最新的在前）并限制数量
-                    query += " ORDER BY appointment_date DESC LIMIT %s"
-                    params.append(limit)
-                    
-                    await cur.execute(query, params)
-                    rows = await cur.fetchall()
+            # 使用 SQLAlchemy ORM 查询记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                from sqlalchemy import select, func
+                query = select(Appointment).where(Appointment.user_id == user_id)
+                
+                # 添加状态过滤条件
+                if status:
+                    query = query.where(Appointment.status == status)
+                
+                # 添加时间过滤条件
+                if start_date:
+                    query = query.where(func.date(Appointment.appointment_date) >= start_date)
+                if end_date:
+                    query = query.where(func.date(Appointment.appointment_date) <= end_date)
+                
+                # 排序和限制
+                query = query.order_by(Appointment.appointment_date.desc()).limit(limit)
+                
+                result = await session.execute(query)
+                rows = result.scalars().all()
             
             if not rows:
                 status_msg = f"状态为 {status} 的" if status else ""
@@ -371,13 +340,13 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
             
             result_lines = [f"找到 {len(rows)} 条预约记录：\n"]
             for idx, row in enumerate(rows, 1):
-                appointment_id = row['id']
-                department = row['department']
-                doctor_id = row.get('doctor_id') or ""
-                doctor_name = row.get('doctor_name') or ""
-                appointment_date = row['appointment_date']
-                status = row['status']
-                notes = row['notes'] or ""
+                appointment_id = row.id
+                department = row.department
+                doctor_id = row.doctor_id or ""
+                doctor_name = row.doctor_name or ""
+                appointment_date = row.appointment_date
+                status = row.status
+                notes = row.notes or ""
                 
                 date_str = appointment_date.strftime('%Y-%m-%d')
                 time_str = appointment_date.strftime('%Y-%m-%d %H:%M:%S')
@@ -405,7 +374,7 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
         notes: Optional[str] = None
     ) -> str:
         """
-        更新已存在的复诊预约信息
+        更新已存在的复诊预约信息（使用 SQLAlchemy ORM）
         
         Args:
             appointment_id: 预约ID
@@ -424,35 +393,34 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
             if status and status not in ['pending', 'completed', 'cancelled']:
                 return f"无效的状态值：{status}。有效状态：pending（待处理）、completed（已完成）、cancelled（已取消）。"
             
-            # 查找记录
-            async with pool.connection() as conn:
-                # 先查询记录（在autocommit模式下）
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        SELECT id, department, doctor_id, doctor_name, appointment_date, status, notes
-                        FROM appointments
-                        WHERE id = %s AND user_id = %s
-                    """, (int(appointment_id) if appointment_id.isdigit() else None, user_id))
+            # 解析预约ID
+            appointment_id_int = int(appointment_id) if appointment_id.isdigit() else None
+            if appointment_id_int is None:
+                return f"无效的预约ID: {appointment_id}"
+            
+            # 使用 SQLAlchemy ORM 查询和更新记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                try:
+                    # 查询记录
+                    db_obj = await crud_appointment.get(session, id=appointment_id_int, user_id=user_id)
                     
-                    row = await cur.fetchone()
-                    
-                    if not row:
+                    if not db_obj:
                         return f"未找到ID为 {appointment_id} 的预约记录。"
                     
-                    # 获取当前值
-                    current_department = row['department']
-                    current_doctor_id = row.get('doctor_id')
-                    current_doctor_name = row.get('doctor_name')
-                    current_appointment_date = row['appointment_date']
-                    current_status = row['status']
-                    current_notes = row['notes'] or ""
+                    # 准备更新数据
+                    update_data = {}
                     
-                    # 更新字段
-                    new_department = department if department is not None else current_department
-                    new_doctor_id = doctor_id if doctor_id is not None else current_doctor_id
-                    new_doctor_name = doctor_name if doctor_name is not None else current_doctor_name
-                    new_status = status if status is not None else current_status
-                    new_notes = notes if notes is not None else current_notes
+                    if department is not None:
+                        update_data["department"] = department
+                    if doctor_id is not None:
+                        update_data["doctor_id"] = doctor_id
+                    if doctor_name is not None:
+                        update_data["doctor_name"] = doctor_name
+                    if status is not None:
+                        update_data["status"] = status
+                    if notes is not None:
+                        update_data["notes"] = notes
                     
                     # 处理时间更新
                     if appointment_date is not None:
@@ -473,29 +441,22 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
                         is_valid, validation_msg = validate_appointment_date(new_appointment_date)
                         if not is_valid:
                             return validation_msg
-                    else:
-                        new_appointment_date = current_appointment_date
-                
-                # 更新数据库记录（在autocommit模式下直接执行UPDATE）
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        UPDATE appointments
-                        SET department = %s, doctor_id = %s, doctor_name = %s, 
-                            appointment_date = %s, status = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
-                        WHERE id = %s AND user_id = %s
-                    """, (new_department, new_doctor_id, new_doctor_name, new_appointment_date, 
-                          new_status, new_notes, 
-                          int(appointment_id) if appointment_id.isdigit() else None, user_id))
-                    # 在autocommit模式下，UPDATE会自动提交
-                
-                # 验证更新是否成功
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        SELECT id, status FROM appointments WHERE id = %s AND user_id = %s
-                    """, (int(appointment_id) if appointment_id.isdigit() else None, user_id))
-                    verify_result = await cur.fetchone()
-                    if not verify_result:
-                        logger.warning(f"更新后无法查询到记录，ID={appointment_id}")
+                        
+                        update_data["appointment_date"] = new_appointment_date
+                    
+                    # 更新记录
+                    db_obj = await crud_appointment.update(session, db_obj, update_data)
+                    await session.commit()
+                    
+                    new_appointment_date = update_data.get("appointment_date", db_obj.appointment_date)
+                    new_department = update_data.get("department", db_obj.department)
+                    new_doctor_id = update_data.get("doctor_id", db_obj.doctor_id)
+                    new_doctor_name = update_data.get("doctor_name", db_obj.doctor_name)
+                    new_status = update_data.get("status", db_obj.status)
+                    
+                except Exception as e:
+                    await session.rollback()
+                    raise
             
             logger.info(f"成功更新用户 {user_id} 的预约记录: ID={appointment_id}")
             
@@ -516,4 +477,3 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
             return f"更新预约记录时发生错误: {str(e)}"
     
     return [appointment_booking, query_appointment, update_appointment]
-

@@ -289,6 +289,82 @@ conda run -n py_311_rag python test/infrastructure/test_performance_comparison.p
 - 建议在目标生产环境或类似环境中运行测试以获取准确的性能数据
 - 性能开销 < 20% 通常被认为是可接受的
 
+### test_unified_pool_management.py
+
+数据库连接池统一管理测试脚本。
+
+#### 测试内容
+
+1. **连接池统一初始化测试**
+   - 验证 `DatabasePool.create_pool()` 同时初始化 LangGraph 和 SQLAlchemy 连接池
+   - 检查两个连接池是否都已正确创建
+
+2. **连接池状态验证**
+   - 验证 `db_pool.pool` (LangGraph) 和 `db_pool.sqlalchemy_engine` 都不为 None
+   - 确保两个连接池都已正确初始化
+
+3. **连接池统计信息测试**
+   - 测试 `get_pool_stats()` 方法
+   - 验证统计信息包含 LangGraph 和 SQLAlchemy 连接池的详细信息
+
+4. **SQLAlchemy 连接测试**
+   - 使用统一管理的引擎执行查询
+   - 验证 SQLAlchemy 连接正常工作
+
+5. **LangGraph 连接池测试**
+   - 使用 LangGraph 连接池执行查询
+   - 验证 LangGraph 连接池正常工作
+
+6. **连接池关闭测试**
+   - 测试统一关闭所有连接池
+   - 验证资源正确释放
+
+#### 运行方式
+
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/infrastructure/test_unified_pool_management.py
+```
+
+#### 前置条件
+
+1. 已安装 SQLAlchemy 2.0+ 和 greenlet：
+   ```bash
+   pip install sqlalchemy>=2.0.0 greenlet>=3.0.0
+   ```
+
+2. 数据库连接配置正确（环境变量 `DB_URI`）
+
+3. 数据库服务正在运行
+
+#### 预期结果
+
+所有测试应该通过，输出类似：
+
+```
+✅ 连接池初始化成功
+✅ LangGraph 和 SQLAlchemy 连接池都已初始化
+✅ 连接池统计信息: {...}
+✅ SQLAlchemy 查询成功，返回 X 条记录
+✅ LangGraph 连接池查询成功
+✅ 连接池关闭成功
+✅ 所有测试通过
+```
+
+#### 重要说明
+
+- **统一管理**：`DatabasePool` 统一管理 LangGraph 和 SQLAlchemy 连接池
+- **配置一致**：两个连接池使用相同的配置参数（`MIN_SIZE`、`MAX_SIZE`、`DB_TIMEZONE`）
+- **资源优化**：避免重复创建连接池，统一关闭资源
+- **监控能力**：提供连接池统计信息和健康检查接口
+
+#### 相关文档
+
+- `utils/database.py` - 统一连接池管理实现
+- `utils/db/base.py` - SQLAlchemy 引擎管理
+- `docs/数据库使用指南.md` - 数据库使用文档
+- `01_backendServer.py` - 应用初始化示例
+
 ## 后续测试计划
 
 根据项目整理计划，后续将添加：

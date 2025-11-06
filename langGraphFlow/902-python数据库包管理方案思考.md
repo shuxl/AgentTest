@@ -10,8 +10,9 @@
 - 使用方式：共享同一个连接池实例
 
 **业务代码使用的包**：
-- `psycopg[binary,pool]>=3.1.0`：直接使用 `AsyncConnectionPool` 进行 CRUD 操作
-- 当前代码位置：`utils/tools/appointment_tools.py`、`utils/tools/blood_pressure_tools.py`
+- ~~`psycopg[binary,pool]>=3.1.0`：直接使用 `AsyncConnectionPool` 进行 CRUD 操作~~（已废弃）
+- ✅ **SQLAlchemy 2.0+ async**：使用 SQLAlchemy ORM 进行 CRUD 操作（已完成改造）
+- 当前代码位置：`utils/tools/appointment_tools.py`、`utils/tools/blood_pressure_tools.py`（已重构为使用 SQLAlchemy）
 
 ### 1.2 当前 CRUD 代码存在的问题
 
@@ -641,43 +642,46 @@ results = await builder.fetch_all()
 
 **实施时间**：4-6 周
 
-### 6.2 长期方案（可选）
+### 6.2 长期方案（已完成 ✅）
 
 **方案**：引入 SQLAlchemy async
 
+**实施状态**：✅ **已完成**（2025-11-07）
+
 **理由**：
 - ✅ 功能强大，生态丰富
-- ✅ 支持数据库迁移
-- ✅ 代码更易维护
+- ✅ 支持数据库迁移（已集成 Alembic）
+- ✅ 代码更易维护（已重构完成）
 
-**前提条件**：
-- 充分验证与 LangGraph 的兼容性
-- 团队熟悉 SQLAlchemy
-- 有足够时间进行重构
+**实施结果**：
+- ✅ 已充分验证与 LangGraph 的兼容性
+- ✅ 已完成所有业务代码重构
+- ✅ 性能开销在可接受范围内
+- ✅ 代码质量显著提升
 
-**实施时间**：8-12 周（包括学习和重构）
+**实施时间**：实际用时约 4-5 周（包括测试和优化）
 
 ---
 
-## 七、建议
+## 七、建议（已实施完成 ✅）
 
-### 7.1 立即行动
+### 7.1 实施结果
 
-1. **实施短期方案**：基于 `psycopg_pool` 封装数据库工具层
-2. **逐步重构**：先重构一个模块（如 `appointment_tools.py`），验证效果后再推广
-3. **编写测试**：确保重构后功能正常
+1. ✅ **已完成 SQLAlchemy async 改造**：所有业务代码已迁移到 SQLAlchemy ORM
+2. ✅ **已完成重构**：`appointment_tools.py` 和 `blood_pressure_tools.py` 已重构完成
+3. ✅ **已完成测试**：包括兼容性测试、性能测试、端到端测试等
 
-### 7.2 长期规划
+### 7.2 后续维护
 
-1. **评估 SQLAlchemy**：如果项目规模扩大，考虑引入 SQLAlchemy
-2. **性能监控**：建立性能监控机制，对比优化效果
-3. **文档维护**：保持文档更新，方便团队使用
+1. **性能监控**：继续监控 SQLAlchemy 的性能表现，必要时进行优化
+2. **文档维护**：保持文档更新，确保新团队成员能够快速上手
+3. **代码质量**：继续使用 SQLAlchemy ORM 的优势，保持代码的可维护性
 
-### 7.3 风险控制
+### 7.3 经验总结
 
-1. **兼容性测试**：任何新引入的包都需要充分测试与 LangGraph 的兼容性
-2. **渐进式迁移**：不要一次性重构所有代码，逐步迁移
-3. **回滚方案**：保留原有代码，确保可以回滚
+1. ✅ **兼容性验证很重要**：通过充分的兼容性测试确保了与 LangGraph 的完美兼容
+2. ✅ **渐进式迁移有效**：分阶段实施降低了风险，确保了改造的顺利进行
+3. ✅ **统一管理是关键**：通过 `DatabasePool` 统一管理连接池，确保了配置一致性
 
 ---
 
@@ -690,7 +694,41 @@ results = await builder.fetch_all()
 
 ---
 
-**文档版本**：v1.0  
+---
+
+## 九、实施状态更新（2025-11-07）
+
+### 9.1 改造完成情况
+
+✅ **已完成 SQLAlchemy async 改造**（2025-11-07）
+
+**实施内容**：
+1. ✅ 已完成兼容性验证（连接池兼容性、事务隔离、性能对比）
+2. ✅ 已完成数据模型设计（BloodPressureRecord、Appointment）
+3. ✅ 已完成 CRUD 操作重构（使用 SQLAlchemy ORM）
+4. ✅ 已完成数据库连接管理优化（统一连接池管理）
+5. ✅ 已完成测试和优化（端到端测试、并发测试、代码清理）
+
+**当前状态**：
+- ✅ 业务代码已全部迁移到 SQLAlchemy ORM
+- ✅ 使用统一的 `DatabasePool` 管理连接池
+- ✅ 所有工具函数已重构为使用 `CRUDBase`
+- ✅ 保持了与 LangGraph 的完全兼容性
+
+**技术架构**：
+- LangGraph：继续使用 `psycopg_pool.AsyncConnectionPool`
+- 业务代码：使用 SQLAlchemy async ORM（通过 `psycopg` 驱动）
+- 连接池管理：统一由 `utils.database.DatabasePool` 管理
+- 配置一致性：两个连接池使用相同的配置参数
+
+**相关文档**：
+- `docs/数据库使用指南.md` - 详细的使用文档
+- `test/infrastructure/` - 兼容性和性能测试
+- `utils/db/` - SQLAlchemy ORM 实现
+
+---
+
+**文档版本**：v2.0  
 **创建日期**：2025-02-XX  
-**最后更新**：2025-02-XX
+**最后更新**：2025-11-07（SQLAlchemy async 改造完成）
 

@@ -1,17 +1,28 @@
 """
-血压记录工具实现
+血压记录工具实现（使用 SQLAlchemy ORM）
 包含record_blood_pressure、query_blood_pressure、update_blood_pressure、info工具
 使用PostgreSQL数据库表blood_pressure_records存储，符合设计文档要求
+
+注意：
+- 已重构为使用 SQLAlchemy ORM，不再直接使用 psycopg
+- pool 参数保留以保持接口兼容性，但内部不再使用
+- 所有数据库操作通过 SQLAlchemy 的 CRUDBase 进行
 """
 import logging
 from typing import Optional
 from langchain_core.tools import tool
 from datetime import datetime
 import re
-from psycopg_pool import AsyncConnectionPool
+from psycopg_pool import AsyncConnectionPool  # 保留以保持接口兼容性
 from langgraph.store.postgres import AsyncPostgresStore
 
+# SQLAlchemy 相关导入
+from ..db import get_async_session, BloodPressureRecord, CRUDBase
+
 logger = logging.getLogger(__name__)
+
+# 创建 CRUD 实例
+crud_blood_pressure = CRUDBase(BloodPressureRecord)
 
 
 def validate_blood_pressure(systolic: int, diastolic: int) -> tuple[bool, str]:
@@ -184,67 +195,12 @@ async def parse_datetime_with_llm(date_str: Optional[str], llm=None) -> tuple[st
     return now.isoformat(), now.strftime("%Y-%m-%d"), original_description
 
 
-def parse_datetime(date_str: Optional[str]) -> tuple[str, str]:
-    """
-    解析日期时间字符串，转换为ISO格式的时间戳和日期（兼容旧接口）
-    
-    注意：此函数不支持相对时间解析，建议使用parse_datetime_with_llm
-    
-    Args:
-        date_str: 日期时间字符串（支持标准格式）
-    
-    Returns:
-        (timestamp, date): ISO格式的时间戳和日期字符串
-    """
-    if date_str is None:
-        now = datetime.now()
-        return now.isoformat(), now.strftime("%Y-%m-%d")
-    
-    try:
-        # 尝试解析标准日期时间格式
-        if re.match(r'^\d{4}-\d{2}-\d{2}', date_str):
-            # 标准日期格式 YYYY-MM-DD
-            if len(date_str) == 10:
-                dt = datetime.strptime(date_str, "%Y-%m-%d")
-            else:
-                # 带时间的格式
-                dt = datetime.fromisoformat(date_str.replace(' ', 'T'))
-            return dt.isoformat(), dt.strftime("%Y-%m-%d")
-        
-        # 尝试其他常见格式
-        formats = [
-            "%Y-%m-%d %H:%M:%S",
-            "%Y/%m/%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
-            "%Y/%m/%d %H:%M",
-            "%Y-%m-%d",
-            "%Y/%m/%d",
-        ]
-        
-        for fmt in formats:
-            try:
-                dt = datetime.strptime(date_str, fmt)
-                return dt.isoformat(), dt.strftime("%Y-%m-%d")
-            except ValueError:
-                continue
-        
-        # 如果都解析失败，使用当前时间
-        logger.warning(f"日期解析失败: {date_str}，使用当前时间")
-        now = datetime.now()
-        return now.isoformat(), now.strftime("%Y-%m-%d")
-        
-    except Exception as e:
-        logger.warning(f"日期解析失败: {date_str}, 错误: {e}，使用当前时间")
-        now = datetime.now()
-        return now.isoformat(), now.strftime("%Y-%m-%d")
-
-
 def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: Optional[AsyncPostgresStore] = None):
     """
-    创建血压记录相关的工具
+    创建血压记录相关的工具（使用 SQLAlchemy ORM）
     
     Args:
-        pool: PostgreSQL数据库连接池实例，用于访问blood_pressure_records表
+        pool: PostgreSQL数据库连接池实例（保留以保持接口兼容性，实际使用 SQLAlchemy）
         user_id: 用户ID
         store: PostgreSQL Store实例（可选），用于查询用户设置信息（长期记忆）
     
@@ -261,7 +217,7 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
         notes: Optional[str] = None
     ) -> str:
         """
-        记录用户的血压数据
+        记录用户的血压数据（使用 SQLAlchemy ORM）
         
         Args:
             systolic: 收缩压（mmHg），范围50-300
@@ -286,7 +242,7 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
             llm = get_llm_by_config()
             timestamp, date, _ = await parse_datetime_with_llm(date_time, llm)
             
-            # 将ISO格式的时间戳转换为PostgreSQL TIMESTAMP格式
+            # 将ISO格式的时间戳转换为datetime对象
             try:
                 if 'Z' in timestamp:
                     measurement_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
@@ -296,20 +252,26 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
                 # 如果解析失败，使用当前时间
                 measurement_time = datetime.now()
             
-            # 插入到数据库表（包含原始时间描述）
-            # 使用智能体提供的original_time_description参数，如果没有提供则使用None
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        INSERT INTO blood_pressure_records 
-                        (user_id, systolic, diastolic, measurement_time, original_time_description, notes)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (user_id, systolic, diastolic, measurement_time, 
-                          original_time_description if original_time_description else None, notes or ""))
-                    
-                    result = await cur.fetchone()
-                    record_id = result['id'] if result else None
+            # 使用 SQLAlchemy ORM 创建记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                try:
+                    db_obj = await crud_blood_pressure.create(
+                        session,
+                        {
+                            "user_id": user_id,
+                            "systolic": systolic,
+                            "diastolic": diastolic,
+                            "measurement_time": measurement_time,
+                            "original_time_description": original_time_description if original_time_description else None,
+                            "notes": notes or ""
+                        }
+                    )
+                    await session.commit()
+                    record_id = db_obj.id
+                except Exception as e:
+                    await session.rollback()
+                    raise
             
             logger.info(f"成功为用户 {user_id} 保存血压记录: ID={record_id}, systolic={systolic}, diastolic={diastolic}")
             
@@ -335,7 +297,7 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
         limit: int = 10
     ) -> str:
         """
-        查询用户的历史血压记录
+        查询用户的历史血压记录（使用 SQLAlchemy ORM）
         
         Args:
             start_date: 开始日期（ISO格式），可选
@@ -346,31 +308,26 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
             str: 查询结果，格式化的血压记录列表
         """
         try:
-            # 从数据库表查询数据
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    # 构建查询SQL（包含原始时间描述）
-                    query = """
-                        SELECT id, systolic, diastolic, measurement_time, original_time_description, notes, created_at
-                        FROM blood_pressure_records
-                        WHERE user_id = %s
-                    """
-                    params = [user_id]
-                    
-                    # 添加时间过滤条件
-                    if start_date:
-                        query += " AND DATE(measurement_time) >= %s"
-                        params.append(start_date)
-                    if end_date:
-                        query += " AND DATE(measurement_time) <= %s"
-                        params.append(end_date)
-                    
-                    # 按时间排序（最新的在前）并限制数量
-                    query += " ORDER BY measurement_time DESC LIMIT %s"
-                    params.append(limit)
-                    
-                    await cur.execute(query, params)
-                    rows = await cur.fetchall()
+            # 使用 SQLAlchemy ORM 查询记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                # 构建过滤条件
+                filters = {"user_id": user_id}
+                
+                # 时间过滤条件（使用 QueryBuilder 或直接构建查询）
+                from sqlalchemy import select, func
+                query = select(BloodPressureRecord).where(BloodPressureRecord.user_id == user_id)
+                
+                if start_date:
+                    query = query.where(func.date(BloodPressureRecord.measurement_time) >= start_date)
+                if end_date:
+                    query = query.where(func.date(BloodPressureRecord.measurement_time) <= end_date)
+                
+                # 排序和限制
+                query = query.order_by(BloodPressureRecord.measurement_time.desc()).limit(limit)
+                
+                result = await session.execute(query)
+                rows = result.scalars().all()
             
             if not rows:
                 return "未找到历史血压记录。"
@@ -378,11 +335,11 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
             # 格式化返回结果
             result_lines = [f"找到 {len(rows)} 条血压记录：\n"]
             for idx, row in enumerate(rows, 1):
-                systolic = row['systolic']
-                diastolic = row['diastolic']
-                measurement_time = row['measurement_time']
-                original_time_desc = row.get('original_time_description') or ""
-                notes = row['notes'] or ""
+                systolic = row.systolic
+                diastolic = row.diastolic
+                measurement_time = row.measurement_time
+                original_time_desc = row.original_time_description or ""
+                notes = row.notes or ""
                 
                 date_str = measurement_time.strftime('%Y-%m-%d')
                 time_str = measurement_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -409,44 +366,44 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
         notes: Optional[str] = None
     ) -> str:
         """
-        更新已存在的血压记录
+        更新已存在的血压记录（使用 SQLAlchemy ORM）
         
         Args:
-            record_id: 记录ID（需要包含record_前缀）
+            record_id: 记录ID
             systolic: 新的收缩压，可选
             diastolic: 新的舒张压，可选
             date_time: 新的测量日期时间，可选
+            original_time_description: 新的原始时间描述，可选
             notes: 新的备注，可选
         
         Returns:
             str: 更新结果消息
         """
         try:
-            # 查找记录
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    # 检查记录是否存在
-                    await cur.execute("""
-                        SELECT id, systolic, diastolic, measurement_time, notes
-                        FROM blood_pressure_records
-                        WHERE id = %s AND user_id = %s
-                    """, (int(record_id) if record_id.isdigit() else None, user_id))
+            # 解析记录ID
+            record_id_int = int(record_id) if record_id.isdigit() else None
+            if record_id_int is None:
+                return f"无效的记录ID: {record_id}"
+            
+            # 使用 SQLAlchemy ORM 查询和更新记录
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                try:
+                    # 查询记录
+                    db_obj = await crud_blood_pressure.get(session, id=record_id_int, user_id=user_id)
                     
-                    row = await cur.fetchone()
-                    
-                    if not row:
+                    if not db_obj:
                         return f"未找到ID为 {record_id} 的血压记录。"
                     
-                    # 获取当前值
-                    current_systolic = row['systolic']
-                    current_diastolic = row['diastolic']
-                    current_measurement_time = row['measurement_time']
-                    current_notes = row['notes'] or ""
+                    # 准备更新数据
+                    update_data = {}
                     
-                    # 更新字段
-                    new_systolic = systolic if systolic is not None else current_systolic
-                    new_diastolic = diastolic if diastolic is not None else current_diastolic
-                    new_notes = notes if notes is not None else current_notes
+                    if systolic is not None:
+                        update_data["systolic"] = systolic
+                    if diastolic is not None:
+                        update_data["diastolic"] = diastolic
+                    if notes is not None:
+                        update_data["notes"] = notes
                     
                     # 处理时间更新
                     if date_time is not None:
@@ -462,34 +419,30 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
                         except ValueError:
                             # 如果解析失败，使用当前时间
                             new_measurement_time = datetime.now()
-                    else:
-                        new_measurement_time = current_measurement_time
+                        
+                        update_data["measurement_time"] = new_measurement_time
+                        if original_time_description is not None:
+                            update_data["original_time_description"] = original_time_description
+                    elif original_time_description is not None:
+                        # 只更新原始时间描述，不更新测量时间
+                        update_data["original_time_description"] = original_time_description
                     
                     # 验证更新后的数据
+                    new_systolic = update_data.get("systolic", db_obj.systolic)
+                    new_diastolic = update_data.get("diastolic", db_obj.diastolic)
                     is_valid, validation_msg = validate_blood_pressure(new_systolic, new_diastolic)
                     if not is_valid:
                         return validation_msg
                     
-                    # 更新数据库记录
-                    # 如果date_time不为None，更新measurement_time和original_time_description
-                    # 使用智能体提供的original_time_description参数
-                    if date_time is not None:
-                        await cur.execute("""
-                            UPDATE blood_pressure_records
-                            SET systolic = %s, diastolic = %s, measurement_time = %s, 
-                                original_time_description = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
-                            WHERE id = %s AND user_id = %s
-                        """, (new_systolic, new_diastolic, new_measurement_time, 
-                              original_time_description if original_time_description else None, new_notes, 
-                              int(record_id) if record_id.isdigit() else None, user_id))
-                    else:
-                        # 不更新measurement_time和original_time_description，保持原有值
-                        await cur.execute("""
-                            UPDATE blood_pressure_records
-                            SET systolic = %s, diastolic = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
-                            WHERE id = %s AND user_id = %s
-                        """, (new_systolic, new_diastolic, new_notes, 
-                              int(record_id) if record_id.isdigit() else None, user_id))
+                    # 更新记录
+                    db_obj = await crud_blood_pressure.update(session, db_obj, update_data)
+                    await session.commit()
+                    
+                    new_measurement_time = update_data.get("measurement_time", db_obj.measurement_time)
+                    
+                except Exception as e:
+                    await session.rollback()
+                    raise
             
             logger.info(f"成功更新用户 {user_id} 的血压记录: ID={record_id}, systolic={new_systolic}, diastolic={new_diastolic}")
             
@@ -505,7 +458,7 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
     @tool("info", description="查询用户的基础信息，包括setting信息和血压信息统计")
     async def info() -> str:
         """
-        查询用户的基础信息
+        查询用户的基础信息（使用 SQLAlchemy ORM）
         
         Returns:
             str: 格式化的用户信息，包括setting信息和血压信息统计
@@ -535,17 +488,17 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
                 result_lines.append("（用户设置信息存储在长期记忆中，当前未配置store）")
             result_lines.append("")
             
-            # 2. 查询血压信息统计（从数据库表）
-            async with pool.connection() as conn:
-                async with conn.cursor() as cur:
-                    await cur.execute("""
-                        SELECT systolic, diastolic, measurement_time, original_time_description, notes
-                        FROM blood_pressure_records
-                        WHERE user_id = %s
-                        ORDER BY measurement_time DESC
-                    """, (user_id,))
-                    
-                    rows = await cur.fetchall()
+            # 2. 查询血压信息统计（使用 SQLAlchemy ORM）
+            async_session_maker = get_async_session()
+            async with async_session_maker() as session:
+                # 查询所有记录
+                rows = await crud_blood_pressure.get_multi(
+                    session,
+                    user_id=user_id,
+                    order_by="measurement_time",
+                    order_desc=True,
+                    limit=1000  # 获取足够多的记录用于统计
+                )
             
             result_lines.append("=== 血压信息统计 ===")
             
@@ -556,8 +509,8 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
                 total_records = len(rows)
                 
                 # 计算平均值、最高值、最低值
-                systolic_values = [row['systolic'] for row in rows]
-                diastolic_values = [row['diastolic'] for row in rows]
+                systolic_values = [row.systolic for row in rows]
+                diastolic_values = [row.diastolic for row in rows]
                 
                 avg_systolic = sum(systolic_values) / len(systolic_values) if systolic_values else 0
                 avg_diastolic = sum(diastolic_values) / len(diastolic_values) if diastolic_values else 0
@@ -579,13 +532,13 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
                 result_lines.append(f"最低舒张压：{min_diastolic} mmHg")
                 
                 if latest_record:
-                    latest_date = latest_record['measurement_time'].strftime('%Y-%m-%d')
+                    latest_date = latest_record.measurement_time.strftime('%Y-%m-%d')
                     result_lines.append(f"\n最新记录：")
                     result_lines.append(f"  日期：{latest_date}")
-                    result_lines.append(f"  收缩压：{latest_record['systolic']} mmHg")
-                    result_lines.append(f"  舒张压：{latest_record['diastolic']} mmHg")
-                    if latest_record['notes']:
-                        result_lines.append(f"  备注：{latest_record['notes']}")
+                    result_lines.append(f"  收缩压：{latest_record.systolic} mmHg")
+                    result_lines.append(f"  舒张压：{latest_record.diastolic} mmHg")
+                    if latest_record.notes:
+                        result_lines.append(f"  备注：{latest_record.notes}")
             
             return "\n".join(result_lines)
             
@@ -594,4 +547,3 @@ def create_blood_pressure_tools(pool: AsyncConnectionPool, user_id: str, store: 
             return f"查询用户信息时发生错误: {str(e)}"
     
     return [record_blood_pressure, query_blood_pressure, update_blood_pressure, info]
-

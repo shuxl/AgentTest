@@ -12,7 +12,21 @@ test/
 │   └── test_blood_pressure_integration.py  # 血压记录集成测试
 ├── appointment/              # 复诊管理智能体测试
 │   └── test_appointment_integration.py     # 复诊管理集成测试
-└── infrastructure/           # 基础设施测试（预留）
+├── infrastructure/           # 基础设施测试
+│   ├── test_sqlalchemy_setup.py            # SQLAlchemy 环境准备测试
+│   ├── test_pool_compatibility.py          # 连接池兼容性测试
+│   ├── test_transaction_isolation.py       # 事务隔离测试
+│   ├── test_performance_comparison.py      # 性能对比测试
+│   └── test_unified_pool_management.py     # 统一连接池管理测试
+├── db_models/                # 数据模型测试
+│   └── test_db_models.py      # 数据模型和 Alembic 配置验证测试
+├── crud/                     # CRUD 操作测试
+│   └── test_crud_operations.py             # CRUD 基类单元测试
+├── tools/                    # 工具单元测试
+│   ├── test_blood_pressure_tools.py         # 血压记录工具单元测试
+│   └── test_appointment_tools.py            # 复诊管理工具单元测试
+└── integration/              # 集成测试
+    └── test_crud_integration.py            # CRUD 重构后集成测试
 ```
 
 ## 测试分类说明
@@ -259,6 +273,235 @@ conda run -n py_311_rag python test/infrastructure/test_performance_comparison.p
 
 ---
 
+### 8. 统一连接池管理测试 (`infrastructure/`)
+
+**test_unified_pool_management.py** - 数据库连接池统一管理测试
+
+#### 测试范围：
+- 连接池统一初始化测试
+- LangGraph 和 SQLAlchemy 连接池状态验证
+- 连接池统计信息获取测试
+- SQLAlchemy 连接测试
+- LangGraph 连接池查询测试
+- 连接池关闭测试
+
+#### 测试用例：
+1. **测试1**: 连接池初始化
+   - 验证 `DatabasePool.create_pool()` 同时初始化两个连接池
+   - 检查 LangGraph 和 SQLAlchemy 连接池是否都已创建
+
+2. **测试2**: 连接池状态验证
+   - 验证 `db_pool.pool` 和 `db_pool.sqlalchemy_engine` 都不为 None
+   - 确保两个连接池都已正确初始化
+
+3. **测试3**: 连接池统计信息
+   - 测试 `get_pool_stats()` 方法
+   - 验证统计信息包含 LangGraph 和 SQLAlchemy 连接池信息
+
+4. **测试4**: SQLAlchemy 连接测试
+   - 使用统一管理的引擎执行查询
+   - 验证 SQLAlchemy 连接正常工作
+
+5. **测试5**: LangGraph 连接池测试
+   - 使用 LangGraph 连接池执行查询
+   - 验证 LangGraph 连接池正常工作
+
+6. **测试6**: 连接池关闭
+   - 测试统一关闭所有连接池
+   - 验证资源正确释放
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/infrastructure/test_unified_pool_management.py
+```
+
+#### 测试特点：
+- 验证统一连接池管理功能
+- 确保 LangGraph 和 SQLAlchemy 连接池配置一致
+- 验证连接池监控功能
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 数据库连接配置正确
+- 数据库服务正在运行
+
+#### 相关文档：
+- `utils/database.py` - 统一连接池管理实现
+- `utils/db/base.py` - SQLAlchemy 引擎管理
+- `docs/数据库使用指南.md` - 数据库使用文档
+
+---
+
+### 9. 数据模型测试 (`db_models/`)
+
+**test_db_models.py** - 数据模型和 Alembic 配置验证测试
+
+#### 测试范围：
+- SQLAlchemy 数据模型导入和定义验证
+- 数据库引擎创建和连接测试
+- Alembic 迁移配置验证
+
+#### 测试用例：
+1. **测试1**: 验证数据模型导入
+   - 检查 `BloodPressureRecord` 和 `Appointment` 模型是否正确导入
+   - 验证表名定义是否正确
+   - 检查 `Base.metadata` 是否包含所有表
+
+2. **测试2**: 验证数据库引擎创建
+   - 测试 SQLAlchemy 异步引擎创建
+   - 测试数据库连接是否正常
+   - 验证引擎关闭功能
+
+3. **测试3**: 验证 Alembic 配置
+   - 检查 `alembic/` 目录结构是否存在
+   - 检查 `alembic.ini` 配置文件是否存在
+   - 检查迁移脚本是否存在
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/db_models/test_db_models.py
+```
+
+#### 测试特点：
+- 验证 SQLAlchemy ORM 模型定义是否正确
+- 验证数据库引擎配置是否正确
+- 验证 Alembic 迁移工具配置是否正确
+- 为数据库迁移和 CRUD 重构做准备
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 已安装 Alembic
+- 数据库连接配置正确
+- 数据库服务正在运行
+
+#### 相关文档：
+- `utils/db/models/` - SQLAlchemy 数据模型定义
+- `utils/db/base.py` - Base 类和数据库引擎管理
+- `alembic/` - Alembic 迁移配置
+- `项目整理计划.md` - 数据库包升级改造计划
+
+---
+
+### 10. CRUD 操作单元测试 (`crud/`)
+
+**test_crud_operations.py** - CRUD 基类单元测试
+
+#### 测试范围：
+- CRUD create 操作测试
+- CRUD get 操作测试（按ID和过滤条件）
+- CRUD get_multi 操作测试（分页、排序、过滤）
+- CRUD update 操作测试
+- CRUD delete 操作测试
+- CRUD count 操作测试
+- QueryBuilder 查询构建器测试
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/crud/test_crud_operations.py
+```
+
+#### 测试特点：
+- 验证 CRUD 基类的所有功能
+- 测试查询构建器的灵活性
+- 验证错误处理和事务管理
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 数据库连接配置正确
+- 数据库服务正在运行
+
+---
+
+### 11. 工具单元测试 (`tools/`)
+
+#### 10.1 血压记录工具单元测试
+
+**test_blood_pressure_tools.py** - 血压记录工具单元测试（SQLAlchemy ORM）
+
+#### 测试范围：
+- `record_blood_pressure` 工具测试
+- `query_blood_pressure` 工具测试
+- `update_blood_pressure` 工具测试
+- `info` 工具测试
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/tools/test_blood_pressure_tools.py
+```
+
+#### 测试特点：
+- 验证重构后的工具功能正常
+- 测试工具接口兼容性
+- 验证 SQLAlchemy ORM 操作
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 数据库连接配置正确
+- 数据库服务正在运行
+
+---
+
+#### 10.2 复诊管理工具单元测试
+
+**test_appointment_tools.py** - 复诊管理工具单元测试（SQLAlchemy ORM）
+
+#### 测试范围：
+- `appointment_booking` 工具测试
+- `query_appointment` 工具测试
+- `update_appointment` 工具测试
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/tools/test_appointment_tools.py
+```
+
+#### 测试特点：
+- 验证重构后的工具功能正常
+- 测试工具接口兼容性
+- 验证 SQLAlchemy ORM 操作
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 数据库连接配置正确
+- 数据库服务正在运行
+
+---
+
+### 12. CRUD 重构后集成测试 (`integration/`)
+
+**test_crud_integration.py** - CRUD 重构后集成测试
+
+#### 测试范围：
+- 工具接口兼容性测试
+- 血压记录智能体集成测试
+- 复诊管理智能体集成测试
+- 并发操作测试
+
+#### 运行方式：
+```bash
+cd langGraphFlow/V2_0_Agent
+conda run -n py_311_rag python test/integration/test_crud_integration.py
+```
+
+#### 测试特点：
+- 验证重构后的工具与 LangGraph 集成正常
+- 测试工具接口向后兼容性
+- 验证并发操作稳定性
+- 验证数据正确保存到数据库
+
+#### 前置条件：
+- 已安装 SQLAlchemy 2.0+ 和 greenlet
+- 数据库连接配置正确
+- LLM API 配置正确
+- 数据库服务正在运行
+
+---
+
 ### 运行所有测试
 
 分别运行各个测试文件：
@@ -284,6 +527,24 @@ conda run -n py_311_rag python test/infrastructure/test_transaction_isolation.py
 
 # SQLAlchemy 性能对比测试
 conda run -n py_311_rag python test/infrastructure/test_performance_comparison.py
+
+# 统一连接池管理测试
+conda run -n py_311_rag python test/infrastructure/test_unified_pool_management.py
+
+# 数据模型和 Alembic 配置验证测试
+conda run -n py_311_rag python test/db_models/test_db_models.py
+
+# CRUD 操作单元测试
+conda run -n py_311_rag python test/crud/test_crud_operations.py
+
+# 血压记录工具单元测试
+conda run -n py_311_rag python test/tools/test_blood_pressure_tools.py
+
+# 复诊管理工具单元测试
+conda run -n py_311_rag python test/tools/test_appointment_tools.py
+
+# CRUD 重构后集成测试
+conda run -n py_311_rag python test/integration/test_crud_integration.py
 ```
 
 ### 测试环境要求
@@ -342,6 +603,12 @@ export LLM_TEMPERATURE="0"
 - ✅ 复诊管理完整流程（CRUD操作）
 - ✅ 相对时间解析功能
 - ✅ 数据库表结构验证
+- ✅ SQLAlchemy 数据模型定义验证
+- ✅ Alembic 迁移配置验证
+- ✅ CRUD 基类功能测试
+- ✅ 重构后工具单元测试
+- ✅ 重构后工具与 LangGraph 集成测试
+- ✅ 统一连接池管理测试
 
 ### 待补充测试
 

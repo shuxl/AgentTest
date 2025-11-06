@@ -53,10 +53,15 @@ class ChatResponse(BaseModel):
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     try:
-        # 初始化数据库连接池
+        # 初始化数据库连接池（统一管理 LangGraph 和 SQLAlchemy）
         db_pool = get_db_pool()
-        app.state.pool = await db_pool.create_pool()
-        logger.info("数据库连接池初始化成功")
+        app.state.db_pool = db_pool  # 保存 db_pool 实例以便后续访问
+        app.state.pool = await db_pool.create_pool()  # LangGraph 使用的连接池
+        
+        # 记录连接池统计信息
+        pool_stats = db_pool.get_pool_stats()
+        logger.info(f"数据库连接池初始化成功")
+        logger.info(f"连接池统计信息: {pool_stats}")
 
         # 初始化checkpointer（短期记忆）
         app.state.checkpointer = AsyncPostgresSaver(app.state.pool)
@@ -98,9 +103,9 @@ async def lifespan(app: FastAPI):
         # 关闭Redis连接
         if hasattr(app.state, 'redis_manager'):
             await app.state.redis_manager.close()
-        # 关闭数据库连接池
-        if hasattr(app.state, 'pool'):
-            await app.state.pool.close()
+        # 关闭数据库连接池（统一关闭 LangGraph 和 SQLAlchemy 连接池）
+        if hasattr(app.state, 'db_pool'):
+            await app.state.db_pool.close()
         logger.info("关闭服务并完成资源清理")
 
 
@@ -205,6 +210,33 @@ async def chat(request: ChatRequest):
 async def health_check():
     """健康检查接口"""
     return {"status": "ok", "message": "服务运行正常"}
+
+
+@app.get("/health/db")
+async def db_health_check():
+    """数据库连接池健康检查接口"""
+    try:
+        db_pool = app.state.db_pool
+        pool_stats = db_pool.get_pool_stats()
+        
+        # 检查连接池状态
+        langgraph_ok = db_pool.pool is not None
+        sqlalchemy_ok = db_pool.sqlalchemy_engine is not None
+        
+        status = "ok" if (langgraph_ok and sqlalchemy_ok) else "degraded"
+        
+        return {
+            "status": status,
+            "langgraph_pool": "ok" if langgraph_ok else "not_initialized",
+            "sqlalchemy_engine": "ok" if sqlalchemy_ok else "not_initialized",
+            "pool_stats": pool_stats
+        }
+    except Exception as e:
+        logger.error(f"数据库健康检查失败: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 
 # 启动服务器
