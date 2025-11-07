@@ -8,8 +8,8 @@ import lombok.Getter;
  * @package: com.viatris.pd.chat.core.enums
  * @className: ChatTypeEnum
  * @author: Andy.lq
- * @description: ChatTypeEnum 对话类型
- * @date: 2025/1/21 10:18
+ * @description ChatTypeEnum 对话类型
+ * @since  2025/1/21 10:18
  * @version: 1.0
  */
 @Getter

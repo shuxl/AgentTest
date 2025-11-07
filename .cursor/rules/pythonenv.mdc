@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# Python 环境配置
+
+在进行任何 Python 相关工作时（包括但不限于运行、调试、安装依赖、执行脚本等），必须使用 conda 环境 `py_311_rag`（Python 3.11）。
+
+## 规则要求
+
+1. **环境激活**：在执行 Python 相关命令前，必须先激活 conda 环境：
+   ```bash
+   conda activate py_311_rag
+   ```
+
+2. **Python 版本**：确保使用的 Python 版本为 3.11
+
+3. **命令执行**：在执行 Python 命令时，如果当前 shell 未激活该环境，应当在命令中显式指定环境，例如：
+   ```bash
+   conda run -n py_311_rag python script.py
+   ```
+   或者先激活环境再执行：
+   ```bash
+   source activate py_311_rag && python script.py
+   ```
+
+4. **环境验证**：在执行 Python 命令前，可以通过以下命令验证环境：
+   ```bash
+   conda info --envs | grep py_311_rag
+   ```
+
+5. **依赖安装**：安装 Python 包时，必须在激活的 py_311_rag 环境下使用 pip 或 conda 进行安装
+
+## 注意事项
+
+- 不要使用系统默认的 Python 环境
+- 不要使用其他 conda 环境
+- 在执行 Python 相关操作时，确保环境变量和路径指向正确的 conda 环境

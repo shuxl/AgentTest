@@ -1,7 +1,5 @@
-package com.lance.agent.config.feign;
+package com.lance.agent.configuration.feign;
 
-import feign.Logger;
-import feign.Request;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * 全局Feign日志配置
  */
 @Configuration
-public class FeignLoggingConfig {
+public class FeignLoggingConfiguration {
 
     @Value("${spring.application.name}")
     private String applicationName;

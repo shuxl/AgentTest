@@ -46,6 +46,22 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Bean Validation (Jakarta Validation) for @Valid/@NotBlank, etc. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>gpdb20160503</artifactId>
+            <version>3.7.2</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.aliyun</groupId>-->
+<!--            <artifactId>alibabacloud-gpdb20160503</artifactId>-->
+<!--            <version>2.0.33</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springdoc</groupId>
