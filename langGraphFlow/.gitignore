@@ -34,6 +34,7 @@ wheels/
 
 # 日志
 *.log
+logfile/
 
 # 测试
 .pytest_cache/

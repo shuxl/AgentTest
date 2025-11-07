@@ -33,9 +33,10 @@ V2_0_Agent/
 │   ├── appointment/           # 复诊管理智能体测试
 │   │   └── test_appointment_integration.py     # 复诊管理集成测试
 │   └── infrastructure/        # 基础设施测试（预留）
-├── logfile/                   # 日志文件目录
-├── create_blood_pressure_table.py  # 创建血压记录表脚本
-├── create_appointment_table.py     # 创建复诊预约表脚本
+├── scripts/                   # 数据库脚本目录
+│   ├── create_blood_pressure_table.py  # 创建血压记录表脚本
+│   └── create_appointment_table.py     # 创建复诊预约表脚本
+├── logfile/                   # 日志文件目录（.gitignore）
 ├── 01_backendServer.py        # 后端服务入口
 ├── 02_frontendServer.py       # 前端服务入口
 ├── generate_lock.py           # 依赖锁定文件生成脚本
@@ -98,10 +99,10 @@ conda run -n py_311_rag python test/appointment/test_appointment_integration.py
 
 ```bash
 # 创建血压记录表
-conda run -n py_311_rag python create_blood_pressure_table.py
+conda run -n py_311_rag python scripts/create_blood_pressure_table.py
 
 # 创建复诊预约表
-conda run -n py_311_rag python create_appointment_table.py
+conda run -n py_311_rag python scripts/create_appointment_table.py
 ```
 
 ### 测试说明
