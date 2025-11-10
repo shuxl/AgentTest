@@ -243,3 +243,124 @@ def create_internal_medicine_diagnosis_agent_node(
         store=store
     )
 
+
+def create_surgery_diagnosis_agent_node(
+    pool: AsyncConnectionPool,
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore = None
+):
+    """
+    创建外科诊断智能体节点（便捷函数）
+    
+    Args:
+        pool: 数据库连接池
+        checkpointer: Checkpointer实例
+        store: Store实例
+    
+    Returns:
+        节点函数
+    """
+    return create_diagnosis_agent_node(
+        department="surgery",
+        pool=pool,
+        checkpointer=checkpointer,
+        store=store
+    )
+
+
+def create_pediatrics_diagnosis_agent_node(
+    pool: AsyncConnectionPool,
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore = None
+):
+    """
+    创建儿科诊断智能体节点（便捷函数）
+    
+    Args:
+        pool: 数据库连接池
+        checkpointer: Checkpointer实例
+        store: Store实例
+    
+    Returns:
+        节点函数
+    """
+    return create_diagnosis_agent_node(
+        department="pediatrics",
+        pool=pool,
+        checkpointer=checkpointer,
+        store=store
+    )
+
+
+def create_gynecology_diagnosis_agent_node(
+    pool: AsyncConnectionPool,
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore = None
+):
+    """
+    创建妇科诊断智能体节点（便捷函数）
+    
+    Args:
+        pool: 数据库连接池
+        checkpointer: Checkpointer实例
+        store: Store实例
+    
+    Returns:
+        节点函数
+    """
+    return create_diagnosis_agent_node(
+        department="gynecology",
+        pool=pool,
+        checkpointer=checkpointer,
+        store=store
+    )
+
+
+def create_cardiology_diagnosis_agent_node(
+    pool: AsyncConnectionPool,
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore = None
+):
+    """
+    创建心血管科诊断智能体节点（便捷函数）
+    
+    Args:
+        pool: 数据库连接池
+        checkpointer: Checkpointer实例
+        store: Store实例
+    
+    Returns:
+        节点函数
+    """
+    return create_diagnosis_agent_node(
+        department="cardiology",
+        pool=pool,
+        checkpointer=checkpointer,
+        store=store
+    )
+
+
+def create_general_diagnosis_agent_node(
+    pool: AsyncConnectionPool,
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore = None
+):
+    """
+    创建通用诊断智能体节点（便捷函数）
+    用于无法确定具体科室时的诊断支持
+    
+    Args:
+        pool: 数据库连接池
+        checkpointer: Checkpointer实例
+        store: Store实例
+    
+    Returns:
+        节点函数
+    """
+    return create_diagnosis_agent_node(
+        department="general",
+        pool=pool,
+        checkpointer=checkpointer,
+        store=store
+    )
+

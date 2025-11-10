@@ -7,6 +7,11 @@ from .appointment_agent import create_appointment_agent_node
 from .diagnosis_agent import (
     create_diagnosis_agent_node,
     create_internal_medicine_diagnosis_agent_node,
+    create_surgery_diagnosis_agent_node,
+    create_pediatrics_diagnosis_agent_node,
+    create_gynecology_diagnosis_agent_node,
+    create_cardiology_diagnosis_agent_node,
+    create_general_diagnosis_agent_node,
     get_diagnosis_system_prompt
 )
 
@@ -15,5 +20,10 @@ __all__ = [
     "create_appointment_agent_node",
     "create_diagnosis_agent_node",
     "create_internal_medicine_diagnosis_agent_node",
+    "create_surgery_diagnosis_agent_node",
+    "create_pediatrics_diagnosis_agent_node",
+    "create_gynecology_diagnosis_agent_node",
+    "create_cardiology_diagnosis_agent_node",
+    "create_general_diagnosis_agent_node",
     "get_diagnosis_system_prompt"
 ]

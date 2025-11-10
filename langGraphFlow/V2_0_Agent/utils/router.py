@@ -104,14 +104,24 @@ def router_node(state: RouterState) -> RouterState:
             sub_intent = intent_result.sub_intent
             if new_intent == "diagnosis" and sub_intent:
                 # 如果有子意图，使用子意图对应的智能体
-                if sub_intent == "internal_medicine_diagnosis":
-                    new_agent = "internal_medicine_diagnosis_agent"
-                    new_intent = "internal_medicine_diagnosis"  # 更新意图为子意图
+                # 科室诊断智能体映射
+                diagnosis_agent_map = {
+                    "internal_medicine_diagnosis": "internal_medicine_diagnosis_agent",
+                    "surgery_diagnosis": "surgery_diagnosis_agent",
+                    "pediatrics_diagnosis": "pediatrics_diagnosis_agent",
+                    "gynecology_diagnosis": "gynecology_diagnosis_agent",
+                    "cardiology_diagnosis": "cardiology_diagnosis_agent",
+                    "general_diagnosis": "general_diagnosis_agent"
+                }
+                
+                if sub_intent in diagnosis_agent_map:
+                    new_agent = diagnosis_agent_map[sub_intent]
+                    new_intent = sub_intent  # 更新意图为子意图
                 else:
-                    # 其他科室的诊断智能体待实现，暂时使用内科诊断智能体
-                    logger.warning(f"诊断子类型 {sub_intent} 的智能体未实现，使用内科诊断智能体")
-                    new_agent = "internal_medicine_diagnosis_agent"
-                    new_intent = "internal_medicine_diagnosis"
+                    # 未知的子类型，使用通用诊断智能体
+                    logger.warning(f"诊断子类型 {sub_intent} 未映射到具体智能体，使用通用诊断智能体")
+                    new_agent = "general_diagnosis_agent"
+                    new_intent = "general_diagnosis"
             else:
                 new_agent = intent_to_agent.get(new_intent)
         
@@ -189,7 +199,12 @@ def clarify_intent_node(state: RouterState) -> RouterState:
         return updated_state
 
 
-def route_decision(state: RouterState) -> Literal["blood_pressure", "appointment", "internal_medicine_diagnosis", "doctor_assistant", "unclear", "__end__"]:
+def route_decision(state: RouterState) -> Literal[
+    "blood_pressure", "appointment", 
+    "internal_medicine_diagnosis", "surgery_diagnosis", "pediatrics_diagnosis",
+    "gynecology_diagnosis", "cardiology_diagnosis", "general_diagnosis",
+    "doctor_assistant", "unclear", "__end__"
+]:
     """
     路由决策函数
     根据当前意图返回路由目标节点名称
