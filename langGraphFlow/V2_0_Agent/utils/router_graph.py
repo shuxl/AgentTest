@@ -11,6 +11,7 @@ from .router_state import RouterState
 from .router import router_node, clarify_intent_node, route_decision
 from .agents.blood_pressure_agent import create_blood_pressure_agent_node
 from .agents.appointment_agent import create_appointment_agent_node
+from .agents.diagnosis_agent import create_internal_medicine_diagnosis_agent_node
 from .config import Config
 
 logger = logging.getLogger(__name__)
@@ -78,11 +79,18 @@ def create_router_graph(checkpointer: AsyncPostgresSaver, pool: AsyncConnectionP
         
         appointment_node = create_appointment_agent_node(pool, checkpointer, store)
         router_graph.add_node("appointment_agent", appointment_node)
+        
+        # 添加内科诊断智能体节点
+        internal_medicine_diagnosis_node = create_internal_medicine_diagnosis_agent_node(
+            pool, checkpointer, store
+        )
+        router_graph.add_node("internal_medicine_diagnosis_agent", internal_medicine_diagnosis_node)
     else:
         # 如果没有pool，使用占位节点
         logger.warning("数据库连接池未提供，使用占位节点")
         router_graph.add_node("blood_pressure_agent", placeholder_agent_node)
         router_graph.add_node("appointment_agent", placeholder_agent_node)
+        router_graph.add_node("internal_medicine_diagnosis_agent", placeholder_agent_node)
     
     # 其他智能体节点仍使用占位节点（待实现）
     router_graph.add_node("doctor_assistant_agent", placeholder_agent_node)
@@ -98,6 +106,7 @@ def create_router_graph(checkpointer: AsyncPostgresSaver, pool: AsyncConnectionP
         {
             "blood_pressure": "blood_pressure_agent",
             "appointment": "appointment_agent",
+            "internal_medicine_diagnosis": "internal_medicine_diagnosis_agent",
             "doctor_assistant": "doctor_assistant_agent",
             "unclear": "clarify_intent",
             "__end__": "__end__"  # 停止执行
@@ -107,6 +116,7 @@ def create_router_graph(checkpointer: AsyncPostgresSaver, pool: AsyncConnectionP
     # 添加回边：专门智能体执行完后，返回到router节点
     router_graph.add_edge("blood_pressure_agent", "router")
     router_graph.add_edge("appointment_agent", "router")
+    router_graph.add_edge("internal_medicine_diagnosis_agent", "router")
     router_graph.add_edge("doctor_assistant_agent", "router")
     router_graph.add_edge("clarify_intent", "router")
     

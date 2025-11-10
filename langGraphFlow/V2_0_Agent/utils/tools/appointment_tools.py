@@ -217,9 +217,8 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
         try:
             # 解析日期时间（使用LLM支持相对时间解析）
             logger.info(f"[appointment_booking] 开始解析日期时间: {appointment_date}")
-            from ..llms import get_llm_by_config
-            llm = get_llm_by_config()
-            timestamp, date, _ = await parse_datetime_with_llm(appointment_date, llm)
+            # 先尝试不使用LLM解析（快速路径），如果失败再使用LLM
+            timestamp, date, _ = await parse_datetime_with_llm(appointment_date, llm=None)
             logger.info(f"[appointment_booking] 日期时间解析结果: timestamp={timestamp}, date={date}")
             
             # 将ISO格式的时间戳转换为datetime对象
@@ -424,10 +423,8 @@ def create_appointment_tools(pool: AsyncConnectionPool, user_id: str, store: Opt
                     
                     # 处理时间更新
                     if appointment_date is not None:
-                        # 使用LLM解析相对时间
-                        from ..llms import get_llm_by_config
-                        llm = get_llm_by_config()
-                        timestamp, date, _ = await parse_datetime_with_llm(appointment_date, llm)
+                        # 先尝试不使用LLM解析（快速路径），如果失败再使用LLM
+                        timestamp, date, _ = await parse_datetime_with_llm(appointment_date, llm=None)
                         try:
                             if 'Z' in timestamp:
                                 new_appointment_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))

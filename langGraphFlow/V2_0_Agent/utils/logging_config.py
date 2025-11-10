@@ -55,6 +55,33 @@ def setup_logging():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     
+    # ========== 方案1：增强 OpenAI 客户端日志 ==========
+    # 启用 OpenAI 相关日志（用于记录底层 HTTP 请求/响应）
+    openai_logger = logging.getLogger("openai")
+    openai_logger.setLevel(logging.DEBUG)
+    
+    openai_base_client_logger = logging.getLogger("openai._base_client")
+    openai_base_client_logger.setLevel(logging.DEBUG)
+    
+    # 创建专门的模型交互日志文件（用于记录所有模型交互）
+    model_log_file = os.path.join(log_dir, "model_interactions.log")
+    model_log_handler = ConcurrentRotatingFileHandler(
+        model_log_file,
+        maxBytes=Config.MAX_BYTES,
+        backupCount=Config.BACKUP_COUNT
+    )
+    model_log_handler.setLevel(logging.DEBUG)
+    model_log_handler.setFormatter(formatter)
+    
+    # 为 OpenAI 相关日志添加专门的日志文件处理器
+    openai_logger.addHandler(model_log_handler)
+    openai_base_client_logger.addHandler(model_log_handler)
+    
+    # 为模型交互回调日志添加专门的日志文件处理器
+    model_callback_logger = logging.getLogger("utils.llm_callbacks")
+    model_callback_logger.addHandler(model_log_handler)
+    
     # 输出初始化信息
     root_logger.info("日志系统初始化完成（控制台+文件）")
+    root_logger.info(f"模型交互日志文件: {model_log_file}")
 

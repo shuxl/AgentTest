@@ -38,3 +38,10 @@ requests>=2.31.0
 # 命令行界面美化（前端客户端使用）
 rich>=13.0.0
 
+# RAG基础设施依赖
+sentence-transformers>=2.2.0  # Embedding模型支持
+numpy>=1.24.0  # 数值计算支持
+psycopg2-binary>=2.9.0  # PostgreSQL向量数据库操作（pgvector支持）
+PyPDF2>=3.0.0  # PDF文档读取支持（可选）
+pdfplumber>=0.9.0  # PDF文档读取支持（可选，与PyPDF2二选一）
+

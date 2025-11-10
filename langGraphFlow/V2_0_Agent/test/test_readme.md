@@ -2,513 +2,255 @@
 
 本目录包含V2.0多智能体路由系统的所有测试用例。
 
+## 📋 文档结构规范
+
+**重要**：为了保持文档的可维护性和可读性，本目录采用分层文档结构：
+
+1. **`test_readme.md`（本文件）**：测试目录的汇总介绍文档
+   - 包含目录结构概览
+   - 包含各测试模块的简要说明和链接
+   - 包含测试环境要求、运行方式汇总等通用信息
+   - **不包含**各测试模块的详细说明（详细说明在各子目录的README.md中）
+
+2. **各子目录的 `README.md`**：每个测试子目录都有自己的README.md文件
+   - 包含该目录下所有测试文件的详细说明
+   - 包含测试范围、测试用例、运行方式、前置条件等详细信息
+   - 例如：`router/README.md`、`blood_pressure/README.md` 等
+
+**文档维护规则**：
+- ✅ 新增测试模块时，在对应子目录创建或更新 `README.md`
+- ✅ 在 `test_readme.md` 中添加简要说明和链接
+- ❌ 不要在 `test_readme.md` 中写入详细的测试说明（应放在子目录的README.md中）
+- ✅ 保持 `test_readme.md` 简洁，作为导航和汇总文档
+
+---
+
 ## 目录结构
 
 ```
-test/
-├── router/                    # 路由功能测试
-│   └── test_router.py        # 路由单元测试
-├── blood_pressure/           # 血压记录智能体测试
-│   └── test_blood_pressure_integration.py  # 血压记录集成测试
-├── appointment/              # 复诊管理智能体测试
-│   └── test_appointment_integration.py     # 复诊管理集成测试
-├── infrastructure/           # 基础设施测试
-│   ├── test_sqlalchemy_setup.py            # SQLAlchemy 环境准备测试
-│   ├── test_pool_compatibility.py          # 连接池兼容性测试
-│   ├── test_transaction_isolation.py       # 事务隔离测试
-│   ├── test_performance_comparison.py      # 性能对比测试
-│   └── test_unified_pool_management.py     # 统一连接池管理测试
-├── db_models/                # 数据模型测试
-│   └── test_db_models.py      # 数据模型和 Alembic 配置验证测试
-├── crud/                     # CRUD 操作测试
-│   └── test_crud_operations.py             # CRUD 基类单元测试
-├── tools/                    # 工具单元测试
-│   ├── test_blood_pressure_tools.py         # 血压记录工具单元测试
-│   └── test_appointment_tools.py            # 复诊管理工具单元测试
-└── integration/              # 集成测试
-    └── test_crud_integration.py            # CRUD 重构后集成测试
+V2_0_Agent/
+├── test/                         # 单元测试和集成测试
+│   ├── router/                  # 路由功能测试
+│   │   ├── README.md            # 路由测试详细说明
+│   │   └── test_router.py      # 路由单元测试
+│   ├── blood_pressure/          # 血压记录智能体测试
+│   │   ├── README.md            # 血压记录测试详细说明
+│   │   └── test_blood_pressure_integration.py
+│   ├── appointment/             # 复诊管理智能体测试
+│   │   ├── README.md            # 复诊管理测试详细说明
+│   │   └── test_appointment_integration.py
+│   ├── infrastructure/          # 基础设施测试
+│   │   ├── README.md            # 基础设施测试详细说明
+│   │   ├── test_sqlalchemy_setup.py
+│   │   ├── test_pool_compatibility.py
+│   │   ├── test_transaction_isolation.py
+│   │   ├── test_performance_comparison.py
+│   │   └── test_unified_pool_management.py
+│   ├── db_models/               # 数据模型测试
+│   │   ├── README.md            # 数据模型测试详细说明
+│   │   └── test_db_models.py
+│   ├── crud/                    # CRUD 操作测试
+│   │   ├── README.md            # CRUD测试详细说明
+│   │   └── test_crud_operations.py
+│   ├── tools/                   # 工具单元测试
+│   │   ├── README.md            # 工具测试详细说明
+│   │   ├── test_blood_pressure_tools.py
+│   │   └── test_appointment_tools.py
+│   └── integration/             # 集成测试
+│       ├── README.md            # 集成测试详细说明
+│       ├── test_crud_integration.py
+│       └── test_e2e_functionality.py
+│   └── rag/                     # RAG模块测试
+│       ├── README.md            # RAG模块测试详细说明
+│       └── test_rag_modules.py
+│   └── diagnosis/              # 诊断智能体测试
+│       ├── README.md            # 诊断智能体测试详细说明
+│       └── test_internal_medicine_diagnosis_integration.py
+│   └── rag_env_check/          # RAG环境检查测试
+│       ├── README.md            # RAG环境检查测试详细说明
+│       ├── test_rag_infrastructure.py
+│       ├── init_pgvector.sql   # pgvector扩展初始化SQL脚本
+│       └── test_data/
+│           ├── test_medical.md
+│           └── test_surgery.txt
 ```
 
-## 测试分类说明
+## 测试模块概览
 
 ### 1. 路由功能测试 (`router/`)
 
-**test_router.py** - 路由功能单元测试
+路由智能体的单元测试，测试意图识别和路由决策功能。
 
-#### 测试范围：
-- RouterState数据结构测试
-- IntentResult数据结构测试
-- identify_intent工具测试（意图识别）
-- clarify_intent工具测试（意图澄清）
-- route_decision函数测试（路由决策）
+**详细说明**：参见 [`router/README.md`](router/README.md)
 
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
+# 路由功能单元测试
 conda run -n py_311_rag python test/router/test_router.py
-```
 
-#### 测试特点：
-- 单元测试，不依赖数据库
-- 测试路由核心逻辑
-- 验证意图识别准确性
-- 验证路由决策正确性
+# 路由图创建测试
+conda run -n py_311_rag python test/router/test_router_graph.py
+
+# 意图澄清功能测试
+conda run -n py_311_rag python test/router/test_clarify_intent.py
+```
 
 ---
 
 ### 2. 血压记录智能体测试 (`blood_pressure/`)
 
-**test_blood_pressure_integration.py** - 血压记录集成测试
+血压记录智能体的集成测试，测试完整的业务流程。
 
-#### 测试范围：
-- 完整业务流程测试（记录 -> 查询 -> 更新）
-- 标准时间格式记录测试
-- 相对时间格式解析测试（如"昨天下午"、"本周一"）
-- 原始时间描述保存和显示验证
-- 统计信息查询测试
-- 数据库表结构验证
+**详细说明**：参见 [`blood_pressure/README.md`](blood_pressure/README.md)
 
-#### 测试用例：
-1. **测试1**: 记录血压（标准格式 - "今天早上8点"）
-2. **测试2**: 记录血压（相对时间格式 - "昨天下午"）
-3. **测试3**: 查询血压记录（验证原始时间描述）
-4. **测试4**: 查询统计信息
-5. **测试5**: 相对时间解析测试（"本周一上午"）
-
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
 conda run -n py_311_rag python test/blood_pressure/test_blood_pressure_integration.py
 ```
-
-#### 测试特点：
-- 集成测试，需要数据库连接
-- 需要初始化checkpointer和store
-- 自动创建和验证数据库表结构
-- 包含测试数据清理功能
-- 测试完整的智能体交互流程
-
-#### 前置条件：
-- 数据库连接配置正确
-- LLM API配置正确
-- 已创建blood_pressure_records表（或测试会自动创建）
 
 ---
 
 ### 3. 复诊管理智能体测试 (`appointment/`)
 
-**test_appointment_integration.py** - 复诊管理集成测试
+复诊管理智能体的集成测试，测试完整的业务流程。
 
-#### 测试范围：
-- 完整业务流程测试（预约 -> 查询 -> 更新）
-- 标准时间格式预约测试
-- 相对时间格式解析测试（如"本周一上午10点"）
-- 预约状态更新测试
-- 数据库记录验证
+**详细说明**：参见 [`appointment/README.md`](appointment/README.md)
 
-#### 测试用例：
-1. **测试1**: 创建预约（标准格式 - "明天下午2点"）
-2. **测试2**: 查询预约记录
-3. **测试3**: 创建预约（相对时间格式 - "本周一上午10点"）
-4. **测试4**: 查询所有预约记录
-5. **测试5**: 更新预约状态
-6. **测试6**: 验证数据库中的记录
-
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
 conda run -n py_311_rag python test/appointment/test_appointment_integration.py
 ```
-
-#### 测试特点：
-- 集成测试，需要数据库连接
-- 需要初始化checkpointer和store
-- 自动创建和验证数据库表结构
-- 包含测试数据清理功能
-- 测试完整的智能体交互流程
-
-#### 前置条件：
-- 数据库连接配置正确
-- LLM API配置正确
-- 已创建appointments表（或测试会自动创建）
 
 ---
 
 ### 4. 基础设施测试 (`infrastructure/`)
 
-**test_sqlalchemy_setup.py** - SQLAlchemy 环境准备和依赖安装测试
+数据库连接、SQLAlchemy兼容性等基础设施测试。
 
-#### 测试范围：
-- SQLAlchemy 2.0+ 安装验证
-- SQLAlchemy 与 psycopg 驱动兼容性测试
-- SQLAlchemy 与 LangGraph 连接池兼容性测试（基础）
-- SQLAlchemy 基本操作功能测试
+**详细说明**：参见 [`infrastructure/README.md`](infrastructure/README.md)
 
-#### 测试用例：
-1. **测试1**: SQLAlchemy 安装验证
-   - 检查版本是否 >= 2.0.0
-   - 验证异步模块是否可用
+**测试文件**：
+- `test_sqlalchemy_setup.py` - SQLAlchemy 环境准备测试
+- `test_pool_compatibility.py` - 连接池兼容性测试
+- `test_transaction_isolation.py` - 事务隔离测试
+- `test_performance_comparison.py` - 性能对比测试
+- `test_unified_pool_management.py` - 统一连接池管理测试
 
-2. **测试2**: SQLAlchemy 与 psycopg 兼容性
-   - 使用 psycopg 驱动创建引擎
-   - 测试数据库连接
-
-3. **测试3**: SQLAlchemy 与 LangGraph 兼容性（基础）
-   - 验证两个框架能否同时连接数据库
-   - 测试基本功能是否正常
-
-4. **测试4**: SQLAlchemy 基本操作
-   - 测试 SELECT、INSERT、UPDATE、DELETE
-   - 测试事务功能
-   - 测试时区设置
-
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/infrastructure/test_sqlalchemy_setup.py
+conda run -n py_311_rag python test/infrastructure/test_*.py
 ```
-
-#### 测试特点：
-- 环境准备测试，验证 SQLAlchemy 是否正确安装和配置
-- 需要数据库连接
-- 为后续的兼容性测试做准备
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+：`pip install sqlalchemy>=2.0.0`
-- 数据库连接配置正确
-- 数据库服务正在运行
-
-#### 相关文档：
-- `test/infrastructure/README.md` - 基础设施测试详细说明
-- `test/infrastructure/test_pool_compatibility.py` - 连接池兼容性测试
-- `902-python数据库包管理方案思考.md` - 数据库包管理方案文档
 
 ---
 
-### 5. 连接池兼容性测试 (`infrastructure/`)
+### 5. 数据模型测试 (`db_models/`)
 
-**test_pool_compatibility.py** - SQLAlchemy 与 LangGraph 连接池兼容性测试
+SQLAlchemy数据模型和Alembic配置的验证测试。
 
-#### 测试范围：
-- SQLAlchemy 使用 psycopg 驱动测试
-- SQLAlchemy 和 LangGraph 独立连接池兼容性测试
-- 连接池配置验证
-- 并发稳定性测试
-- 连接复用测试
+**详细说明**：参见 [`db_models/README.md`](db_models/README.md)
 
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/infrastructure/test_pool_compatibility.py
-```
-
-#### 测试特点：
-- 验证 SQLAlchemy 和 LangGraph 的连接池兼容性
-- 测试并发场景下的稳定性
-- 验证连接池配置和性能
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
----
-
-### 6. 事务隔离测试 (`infrastructure/`)
-
-**test_transaction_isolation.py** - SQLAlchemy 与 LangGraph 事务隔离测试
-
-#### 测试范围：
-- SQLAlchemy 事务隔离测试
-- LangGraph autocommit 行为测试
-- 跨框架事务隔离测试
-- 并发事务稳定性测试
-- 事务回滚隔离测试
-
-#### 运行方式：
-```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/infrastructure/test_transaction_isolation.py
-```
-
-#### 测试特点：
-- 验证 SQLAlchemy 和 LangGraph 的事务隔离
-- 测试并发场景下的稳定性
-- 验证事务回滚隔离
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
----
-
-### 7. 性能对比测试 (`infrastructure/`)
-
-**test_performance_comparison.py** - SQLAlchemy 与原生 psycopg 性能对比测试
-
-#### 测试范围：
-- 简单 SELECT 查询性能对比
-- INSERT 操作性能对比
-- UPDATE 操作性能对比
-- 批量 INSERT 性能对比
-- 并发操作性能对比
-- 复杂查询性能对比
-
-#### 运行方式：
-```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/infrastructure/test_performance_comparison.py
-```
-
-#### 测试特点：
-- 对比 SQLAlchemy 和原生 psycopg 的性能差异
-- 评估性能开销是否可接受（<20%）
-- 生成详细的性能测试报告
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
----
-
-### 8. 统一连接池管理测试 (`infrastructure/`)
-
-**test_unified_pool_management.py** - 数据库连接池统一管理测试
-
-#### 测试范围：
-- 连接池统一初始化测试
-- LangGraph 和 SQLAlchemy 连接池状态验证
-- 连接池统计信息获取测试
-- SQLAlchemy 连接测试
-- LangGraph 连接池查询测试
-- 连接池关闭测试
-
-#### 测试用例：
-1. **测试1**: 连接池初始化
-   - 验证 `DatabasePool.create_pool()` 同时初始化两个连接池
-   - 检查 LangGraph 和 SQLAlchemy 连接池是否都已创建
-
-2. **测试2**: 连接池状态验证
-   - 验证 `db_pool.pool` 和 `db_pool.sqlalchemy_engine` 都不为 None
-   - 确保两个连接池都已正确初始化
-
-3. **测试3**: 连接池统计信息
-   - 测试 `get_pool_stats()` 方法
-   - 验证统计信息包含 LangGraph 和 SQLAlchemy 连接池信息
-
-4. **测试4**: SQLAlchemy 连接测试
-   - 使用统一管理的引擎执行查询
-   - 验证 SQLAlchemy 连接正常工作
-
-5. **测试5**: LangGraph 连接池测试
-   - 使用 LangGraph 连接池执行查询
-   - 验证 LangGraph 连接池正常工作
-
-6. **测试6**: 连接池关闭
-   - 测试统一关闭所有连接池
-   - 验证资源正确释放
-
-#### 运行方式：
-```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/infrastructure/test_unified_pool_management.py
-```
-
-#### 测试特点：
-- 验证统一连接池管理功能
-- 确保 LangGraph 和 SQLAlchemy 连接池配置一致
-- 验证连接池监控功能
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
-#### 相关文档：
-- `utils/database.py` - 统一连接池管理实现
-- `utils/db/base.py` - SQLAlchemy 引擎管理
-- `docs/数据库使用指南.md` - 数据库使用文档
-
----
-
-### 9. 数据模型测试 (`db_models/`)
-
-**test_db_models.py** - 数据模型和 Alembic 配置验证测试
-
-#### 测试范围：
-- SQLAlchemy 数据模型导入和定义验证
-- 数据库引擎创建和连接测试
-- Alembic 迁移配置验证
-
-#### 测试用例：
-1. **测试1**: 验证数据模型导入
-   - 检查 `BloodPressureRecord` 和 `Appointment` 模型是否正确导入
-   - 验证表名定义是否正确
-   - 检查 `Base.metadata` 是否包含所有表
-
-2. **测试2**: 验证数据库引擎创建
-   - 测试 SQLAlchemy 异步引擎创建
-   - 测试数据库连接是否正常
-   - 验证引擎关闭功能
-
-3. **测试3**: 验证 Alembic 配置
-   - 检查 `alembic/` 目录结构是否存在
-   - 检查 `alembic.ini` 配置文件是否存在
-   - 检查迁移脚本是否存在
-
-#### 运行方式：
-```bash
-cd langGraphFlow/V2_0_Agent
 conda run -n py_311_rag python test/db_models/test_db_models.py
 ```
 
-#### 测试特点：
-- 验证 SQLAlchemy ORM 模型定义是否正确
-- 验证数据库引擎配置是否正确
-- 验证 Alembic 迁移工具配置是否正确
-- 为数据库迁移和 CRUD 重构做准备
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 已安装 Alembic
-- 数据库连接配置正确
-- 数据库服务正在运行
-
-#### 相关文档：
-- `utils/db/models/` - SQLAlchemy 数据模型定义
-- `utils/db/base.py` - Base 类和数据库引擎管理
-- `alembic/` - Alembic 迁移配置
-- `项目整理计划.md` - 数据库包升级改造计划
-
 ---
 
-### 10. CRUD 操作单元测试 (`crud/`)
+### 6. CRUD 操作测试 (`crud/`)
 
-**test_crud_operations.py** - CRUD 基类单元测试
+CRUD基类的单元测试。
 
-#### 测试范围：
-- CRUD create 操作测试
-- CRUD get 操作测试（按ID和过滤条件）
-- CRUD get_multi 操作测试（分页、排序、过滤）
-- CRUD update 操作测试
-- CRUD delete 操作测试
-- CRUD count 操作测试
-- QueryBuilder 查询构建器测试
+**详细说明**：参见 [`crud/README.md`](crud/README.md)
 
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
 conda run -n py_311_rag python test/crud/test_crud_operations.py
 ```
 
-#### 测试特点：
-- 验证 CRUD 基类的所有功能
-- 测试查询构建器的灵活性
-- 验证错误处理和事务管理
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
 ---
 
-### 11. 工具单元测试 (`tools/`)
+### 7. 工具单元测试 (`tools/`)
 
-#### 10.1 血压记录工具单元测试
+各个工具模块的单元测试。
 
-**test_blood_pressure_tools.py** - 血压记录工具单元测试（SQLAlchemy ORM）
+**详细说明**：参见 [`tools/README.md`](tools/README.md)
 
-#### 测试范围：
-- `record_blood_pressure` 工具测试
-- `query_blood_pressure` 工具测试
-- `update_blood_pressure` 工具测试
-- `info` 工具测试
+**测试文件**：
+- `test_blood_pressure_tools.py` - 血压记录工具测试
+- `test_appointment_tools.py` - 复诊管理工具测试
 
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/tools/test_blood_pressure_tools.py
+conda run -n py_311_rag python test/tools/test_*.py
 ```
 
-#### 测试特点：
-- 验证重构后的工具功能正常
-- 测试工具接口兼容性
-- 验证 SQLAlchemy ORM 操作
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
 ---
 
-#### 10.2 复诊管理工具单元测试
+### 8. 集成测试 (`integration/`)
 
-**test_appointment_tools.py** - 复诊管理工具单元测试（SQLAlchemy ORM）
+CRUD重构后的集成测试和端到端功能测试。
 
-#### 测试范围：
-- `appointment_booking` 工具测试
-- `query_appointment` 工具测试
-- `update_appointment` 工具测试
+**详细说明**：参见 [`integration/README.md`](integration/README.md)
 
-#### 运行方式：
+**测试文件**：
+- `test_crud_integration.py` - CRUD重构后集成测试
+- `test_e2e_functionality.py` - 端到端功能测试
+
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/tools/test_appointment_tools.py
+conda run -n py_311_rag python test/integration/test_*.py
 ```
 
-#### 测试特点：
-- 验证重构后的工具功能正常
-- 测试工具接口兼容性
-- 验证 SQLAlchemy ORM 操作
-
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- 数据库服务正在运行
-
 ---
 
-### 12. CRUD 重构后集成测试 (`integration/`)
+### 9. RAG模块测试 (`rag/`)
 
-**test_crud_integration.py** - CRUD 重构后集成测试
+RAG基础设施模块的单元测试，测试文档读取、分块、embedding、向量数据库操作和RAG检索流程。
 
-#### 测试范围：
-- 工具接口兼容性测试
-- 血压记录智能体集成测试
-- 复诊管理智能体集成测试
-- 并发操作测试
+**详细说明**：参见 [`rag/README.md`](rag/README.md)
 
-#### 运行方式：
+**运行方式**：
 ```bash
-cd langGraphFlow/V2_0_Agent
-conda run -n py_311_rag python test/integration/test_crud_integration.py
+conda run -n py_311_rag python test/rag/test_rag_modules.py
 ```
 
-#### 测试特点：
-- 验证重构后的工具与 LangGraph 集成正常
-- 测试工具接口向后兼容性
-- 验证并发操作稳定性
-- 验证数据正确保存到数据库
+---
 
-#### 前置条件：
-- 已安装 SQLAlchemy 2.0+ 和 greenlet
-- 数据库连接配置正确
-- LLM API 配置正确
-- 数据库服务正在运行
+### 10. RAG环境检查测试 (`rag_env_check/`)
+
+RAG基础设施的环境验证测试，用于验证本地环境是否支持诊断智能体所需的RAG功能。
+
+**详细说明**：参见 [`rag_env_check/README.md`](rag_env_check/README.md)
+
+**运行方式**：
+```bash
+conda run -n py_311_rag python test/rag_env_check/test_rag_infrastructure.py
+```
 
 ---
 
-### 运行所有测试
+### 11. 诊断智能体测试 (`diagnosis/`)
 
-分别运行各个测试文件：
+诊断智能体的集成测试，测试从路由到诊断智能体的完整流程。
+
+**详细说明**：参见 [`diagnosis/README.md`](diagnosis/README.md)
+
+**运行方式**：
+```bash
+conda run -n py_311_rag python test/diagnosis/test_internal_medicine_diagnosis_integration.py
+```
+
+---
+
+## 快速运行所有测试
 
 ```bash
+cd langGraphFlow/V2_0_Agent
+
 # 路由功能测试
 conda run -n py_311_rag python test/router/test_router.py
+conda run -n py_311_rag python test/router/test_router_graph.py
+conda run -n py_311_rag python test/router/test_clarify_intent.py
 
 # 血压记录集成测试
 conda run -n py_311_rag python test/blood_pressure/test_blood_pressure_integration.py
@@ -516,45 +258,45 @@ conda run -n py_311_rag python test/blood_pressure/test_blood_pressure_integrati
 # 复诊管理集成测试
 conda run -n py_311_rag python test/appointment/test_appointment_integration.py
 
-# SQLAlchemy 环境准备测试
+# 基础设施测试
 conda run -n py_311_rag python test/infrastructure/test_sqlalchemy_setup.py
-
-# SQLAlchemy 连接池兼容性测试
 conda run -n py_311_rag python test/infrastructure/test_pool_compatibility.py
-
-# SQLAlchemy 事务隔离测试
 conda run -n py_311_rag python test/infrastructure/test_transaction_isolation.py
-
-# SQLAlchemy 性能对比测试
 conda run -n py_311_rag python test/infrastructure/test_performance_comparison.py
-
-# 统一连接池管理测试
 conda run -n py_311_rag python test/infrastructure/test_unified_pool_management.py
 
-# 数据模型和 Alembic 配置验证测试
+# 数据模型测试
 conda run -n py_311_rag python test/db_models/test_db_models.py
 
-# CRUD 操作单元测试
+# CRUD 操作测试
 conda run -n py_311_rag python test/crud/test_crud_operations.py
 
-# 血压记录工具单元测试
+# 工具单元测试
 conda run -n py_311_rag python test/tools/test_blood_pressure_tools.py
-
-# 复诊管理工具单元测试
 conda run -n py_311_rag python test/tools/test_appointment_tools.py
 
-# CRUD 重构后集成测试
+# 集成测试
 conda run -n py_311_rag python test/integration/test_crud_integration.py
+conda run -n py_311_rag python test/integration/test_e2e_functionality.py
+
+# RAG模块测试
+conda run -n py_311_rag python test/rag/test_rag_modules.py
+
+# 诊断智能体集成测试
+conda run -n py_311_rag python test/diagnosis/test_internal_medicine_diagnosis_integration.py
+
+# RAG环境检查测试
+conda run -n py_311_rag python test/rag_env_check/test_rag_infrastructure.py
 ```
 
-### 测试环境要求
+## 测试环境要求
 
 1. **Python环境**: 使用conda环境 `py_311_rag` (Python 3.11)
 2. **数据库**: PostgreSQL数据库，配置在环境变量 `DB_URI` 中
 3. **LLM API**: DeepSeek API Key，配置在环境变量 `DEEPSEEK_API_KEY` 中
 4. **依赖包**: 安装 `requirements.txt` 中的所有依赖
 
-### 环境变量配置
+## 环境变量配置
 
 确保以下环境变量已正确设置：
 
@@ -609,10 +351,13 @@ export LLM_TEMPERATURE="0"
 - ✅ 重构后工具单元测试
 - ✅ 重构后工具与 LangGraph 集成测试
 - ✅ 统一连接池管理测试
+- ✅ RAG环境检查测试（文档读取功能）
+- ✅ RAG模块测试（文档读取、分块、Embedding、向量数据库、RAG检索流程）
 
 ### 待补充测试
 
-- ⏳ 医生助手智能体测试
+- ⏳ RAG环境检查测试（文档分块、Embedding、向量数据库、RAG检索流程）
+- ⏳ 诊断智能体测试
 - ⏳ Redis连接测试
 - ⏳ 工具函数单元测试
 - ⏳ 异常情况和错误处理测试
@@ -639,4 +384,3 @@ export LLM_TEMPERATURE="0"
 - 查看测试输出中的详细日志信息
 - 检查数据库中的测试数据是否正确创建
 - 使用测试脚本验证数据库连接和配置
-

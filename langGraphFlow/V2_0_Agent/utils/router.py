@@ -34,7 +34,7 @@ def router_node(state: RouterState) -> RouterState:
     # 关键修复：如果最后一条消息是AI消息，说明没有新的用户消息，应该停止执行
     # 这可以防止无限循环：router -> agent -> router -> ...
     if isinstance(last_message, AIMessage):
-        logger.info("最后一条消息是AI消息，没有新的用户消息，停止路由执行")
+        logger.debug("最后一条消息是AI消息，没有新的用户消息，停止路由执行")
         # 直接返回当前状态，不进行路由决策
         return state
     
@@ -94,18 +94,37 @@ def router_node(state: RouterState) -> RouterState:
             intent_to_agent = {
                 "blood_pressure": "blood_pressure_agent",
                 "appointment": "appointment_agent",
+                "internal_medicine_diagnosis": "internal_medicine_diagnosis_agent",
+                "diagnosis": "internal_medicine_diagnosis_agent",  # 通用诊断意图也路由到内科诊断智能体（默认）
                 "doctor_assistant": "doctor_assistant_agent",
                 "unclear": None
             }
-            new_agent = intent_to_agent.get(new_intent)
+            
+            # 处理诊断意图的子类型
+            sub_intent = intent_result.sub_intent
+            if new_intent == "diagnosis" and sub_intent:
+                # 如果有子意图，使用子意图对应的智能体
+                if sub_intent == "internal_medicine_diagnosis":
+                    new_agent = "internal_medicine_diagnosis_agent"
+                    new_intent = "internal_medicine_diagnosis"  # 更新意图为子意图
+                else:
+                    # 其他科室的诊断智能体待实现，暂时使用内科诊断智能体
+                    logger.warning(f"诊断子类型 {sub_intent} 的智能体未实现，使用内科诊断智能体")
+                    new_agent = "internal_medicine_diagnosis_agent"
+                    new_intent = "internal_medicine_diagnosis"
+            else:
+                new_agent = intent_to_agent.get(new_intent)
         
         # 更新状态
         updated_state = state.copy()
         updated_state["current_intent"] = new_intent
         updated_state["current_agent"] = new_agent
         updated_state["need_reroute"] = need_reroute
+        # 保存子意图
+        if intent_result.sub_intent:
+            updated_state["sub_intent"] = intent_result.sub_intent
         
-        logger.info(f"状态更新: current_intent={new_intent}, current_agent={new_agent}, need_reroute={need_reroute}")
+        logger.info(f"状态更新: current_intent={new_intent}, sub_intent={intent_result.sub_intent}, current_agent={new_agent}, need_reroute={need_reroute}")
         
         return updated_state
         
@@ -170,7 +189,7 @@ def clarify_intent_node(state: RouterState) -> RouterState:
         return updated_state
 
 
-def route_decision(state: RouterState) -> Literal["blood_pressure", "appointment", "doctor_assistant", "unclear", "__end__"]:
+def route_decision(state: RouterState) -> Literal["blood_pressure", "appointment", "internal_medicine_diagnosis", "doctor_assistant", "unclear", "__end__"]:
     """
     路由决策函数
     根据当前意图返回路由目标节点名称

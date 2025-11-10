@@ -26,9 +26,18 @@ INTENT_IDENTIFICATION_PROMPT = """你是一个智能路由助手，负责识别�
    - 关键词：预约、复诊、挂号、就诊、门诊、预约医生、预约时间
    - 示例："我想预约复诊"、"查询我的预约"、"取消预约"
 
-3. doctor_assistant: 医生需要助手处理咨询、病历、处方等
-   - 关键词：病历、处方、患者、咨询、诊断、开具处方、查看病历
-   - 示例："查询患者病历"、"开具处方"、"处理患者咨询"
+3. diagnosis: 医生需要进行患者病情诊断
+   - 子类型：
+     - internal_medicine_diagnosis: 内科诊断（关键词：内科、消化、呼吸、内分泌等）
+     - surgery_diagnosis: 外科诊断（关键词：外科、手术、外伤、肿瘤等）
+     - pediatrics_diagnosis: 儿科诊断（关键词：儿科、儿童、小儿、婴幼儿等）
+     - gynecology_diagnosis: 妇科诊断（关键词：妇科、女性、月经、妊娠等）
+     - cardiology_diagnosis: 心血管科诊断（关键词：心血管、心脏、血压、冠心病等）
+     - neurology_diagnosis: 神经科诊断（关键词：神经、头痛、癫痫、脑部等）
+     - dermatology_diagnosis: 皮肤科诊断（关键词：皮肤、皮疹、过敏、皮炎等）
+     - general_diagnosis: 通用诊断（无法确定具体科室）
+   - 关键词：诊断、病情、症状、检查结果、患者、病例、分析
+   - 示例："帮我诊断这个患者"、"这个症状是什么病"、"分析一下检查结果"
 
 4. unclear: 意图不明确，需要进一步澄清
    - 当用户的消息无法明确归类到上述三种意图时
@@ -36,7 +45,8 @@ INTENT_IDENTIFICATION_PROMPT = """你是一个智能路由助手，负责识别�
 
 请分析用户消息，返回JSON格式的意图识别结果：
 {{
-    "intent_type": "意图类型（blood_pressure/appointment/doctor_assistant/unclear）",
+    "intent_type": "意图类型（blood_pressure/appointment/diagnosis/unclear）",
+    "sub_intent": "子意图类型（如果是diagnosis，返回具体科室如internal_medicine_diagnosis；否则为null）",
     "confidence": 置信度（0.0-1.0之间的浮点数）,
     "entities": {{}},
     "need_clarification": 是否需要澄清（true/false）,
@@ -46,7 +56,8 @@ INTENT_IDENTIFICATION_PROMPT = """你是一个智能路由助手，负责识别�
 规则：
 - 如果意图明确且置信度>0.8，设置need_clarification=false
 - 如果意图不明确（置信度<0.8），设置need_clarification=true
-- 如果用户同时提及多个意图，按优先级选择（优先级：doctor_assistant > appointment > blood_pressure）
+- 如果识别为diagnosis但无法确定具体科室，sub_intent设置为"general_diagnosis"
+- 如果用户同时提及多个意图，按优先级选择（优先级：diagnosis > appointment > blood_pressure）
 - 如果用户的消息很短（如"你好"、"在吗"），且当前有活跃的智能体，可能继续当前意图
 """
 
@@ -70,6 +81,7 @@ def _parse_intent_result(llm_response: str) -> IntentResult:
             logger.warning(f"无法找到JSON部分，返回默认结果。响应: {llm_response}")
             return IntentResult(
                 intent_type="unclear",
+                sub_intent=None,
                 confidence=0.0,
                 entities={},
                 need_clarification=True,
@@ -81,15 +93,20 @@ def _parse_intent_result(llm_response: str) -> IntentResult:
         
         # 验证并创建IntentResult
         intent_type = data.get("intent_type", "unclear")
-        if intent_type not in ["blood_pressure", "appointment", "doctor_assistant", "unclear"]:
+        valid_intents = ["blood_pressure", "appointment", "diagnosis", "internal_medicine_diagnosis", "doctor_assistant", "unclear"]
+        if intent_type not in valid_intents:
             logger.warning(f"无效的意图类型: {intent_type}，使用unclear")
             intent_type = "unclear"
+        
+        # 获取子意图
+        sub_intent = data.get("sub_intent")
         
         confidence = float(data.get("confidence", 0.0))
         confidence = max(0.0, min(1.0, confidence))  # 限制在0-1之间
         
         return IntentResult(
             intent_type=intent_type,
+            sub_intent=sub_intent,
             confidence=confidence,
             entities=data.get("entities", {}),
             need_clarification=data.get("need_clarification", confidence < 0.8),
@@ -99,6 +116,7 @@ def _parse_intent_result(llm_response: str) -> IntentResult:
         logger.error(f"JSON解析失败: {str(e)}，响应: {llm_response}")
         return IntentResult(
             intent_type="unclear",
+            sub_intent=None,
             confidence=0.0,
             entities={},
             need_clarification=True,
@@ -108,6 +126,7 @@ def _parse_intent_result(llm_response: str) -> IntentResult:
         logger.error(f"解析意图识别结果失败: {str(e)}")
         return IntentResult(
             intent_type="unclear",
+            sub_intent=None,
             confidence=0.0,
             entities={},
             need_clarification=True,
@@ -172,6 +191,7 @@ def identify_intent(
         # 返回默认结果
         default_result = IntentResult(
             intent_type="unclear",
+            sub_intent=None,
             confidence=0.0,
             entities={},
             need_clarification=True,
@@ -201,11 +221,15 @@ def clarify_intent(
 可能的意图类型：
 1. blood_pressure: 记录、查询或管理血压数据
 2. appointment: 预约、查询或管理复诊
-3. doctor_assistant: 处理咨询、病历、处方等医生助手功能
+3. diagnosis: 进行患者病情诊断（支持内科、外科、儿科、妇科、心血管科、神经科、皮肤科等各科室诊断）
 
 用户消息: {query}
 
-请生成一个友好的澄清问题，引导用户说明他们的具体需求。问题应该简洁明了，不超过50字。"""
+请生成一个友好的澄清问题，引导用户说明他们的具体需求。
+**重要要求**：
+- 澄清问题必须明确提到三种功能：记录血压、预约复诊、进行病情诊断（或诊断患者病情）
+- 问题应该简洁明了，不超过100字
+- 可以使用"病情诊断"、"诊断"、"健康咨询"等表达方式"""
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", clarify_prompt),
@@ -225,7 +249,7 @@ def clarify_intent(
         
     except Exception as e:
         logger.error(f"生成澄清问题失败: {str(e)}")
-        return "抱歉，我没有理解您的意图。请告诉我您是想记录血压、预约复诊，还是需要其他帮助？"
+        return "抱歉，我没有理解您的意图。请告诉我您是想记录血压、预约复诊、进行病情诊断，还是需要其他帮助？"
 
 
 def get_router_tools():

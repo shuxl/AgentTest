@@ -1,8 +1,9 @@
 import os
 from langchain.chat_models import init_chat_model
-from typing import Optional
+from typing import Optional, List
 from langchain_core.language_models.chat_models import BaseChatModel
 from .config import Config
+from .llm_callbacks import get_model_interaction_logger
 
 
 class LLMInitializationError(Exception):
@@ -15,7 +16,8 @@ def get_llm(
     temperature: float = 0,
     base_url: str = "https://api.deepseek.com",
     api_key: Optional[str] = None,
-    env_key_name: str = "DEEPSEEK_API_KEY"
+    env_key_name: str = "DEEPSEEK_API_KEY",
+    callbacks: Optional[List] = None
 ) -> BaseChatModel:
     """
     通用的 LLM 初始化方法（基础方法）
@@ -26,6 +28,7 @@ def get_llm(
         base_url (str): API 基础 URL，默认为 "https://api.deepseek.com"
         api_key (Optional[str]): API Key，如果为 None 则从环境变量读取
         env_key_name (str): 环境变量名称，默认为 "DEEPSEEK_API_KEY"
+        callbacks (Optional[List]): 回调处理器列表，如果为 None 则使用默认的模型交互日志记录器
     
     Returns:
         BaseChatModel: LLM 实例
@@ -53,6 +56,27 @@ def get_llm(
             base_url=base_url,
             api_key=api_key
         )
+        
+        # ========== 方案2：添加 LangChain 回调处理器 ==========
+        # 如果没有提供回调，使用默认的模型交互日志记录器
+        if callbacks is None:
+            callbacks = [get_model_interaction_logger()]
+        
+        # 为 LLM 实例设置默认回调处理器
+        # 注意：在 LangChain 中，callbacks 通常在调用时通过 config 传递
+        # 但我们可以通过设置默认 callbacks 来确保所有调用都被记录
+        # 如果 LLM 实例支持 default_callback_manager，则使用它
+        if hasattr(llm, 'callbacks') and callbacks:
+            # 如果已有 callbacks，合并它们
+            existing_callbacks = getattr(llm, 'callbacks', None)
+            if existing_callbacks:
+                if isinstance(existing_callbacks, list):
+                    llm.callbacks = existing_callbacks + callbacks
+                else:
+                    llm.callbacks = [existing_callbacks] + callbacks
+            else:
+                llm.callbacks = callbacks
+        
         return llm
     except Exception as e:
         error_msg = f"初始化 LLM 失败: {str(e)}"
@@ -63,7 +87,8 @@ def get_deepseek_llm(
     model: str = "openai:deepseek-chat",
     temperature: float = 0,
     api_key: Optional[str] = None,
-    env_key_name: str = "DEEPSEEK_API_KEY"
+    env_key_name: str = "DEEPSEEK_API_KEY",
+    callbacks: Optional[List] = None
 ) -> BaseChatModel:
     """
     便捷方法：初始化 DeepSeek LLM 实例
@@ -78,6 +103,7 @@ def get_deepseek_llm(
         temperature (float): 温度参数，默认为 0
         api_key (Optional[str]): API Key，如果为 None 则从环境变量读取
         env_key_name (str): 环境变量名称，默认为 "DEEPSEEK_API_KEY"
+        callbacks (Optional[List]): 回调处理器列表，如果为 None 则使用默认的模型交互日志记录器
     
     Returns:
         BaseChatModel: DeepSeek LLM 实例
@@ -94,7 +120,8 @@ def get_deepseek_llm(
         temperature=temperature,
         base_url="https://api.deepseek.com",
         api_key=api_key,
-        env_key_name=env_key_name
+        env_key_name=env_key_name,
+        callbacks=callbacks
     )
 
 
