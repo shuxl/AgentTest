@@ -32,6 +32,10 @@ concurrent-log-handler>=0.9.20
 pydantic>=2.0.0
 python-dotenv>=1.0.0
 
+# 测试框架
+pytest>=7.0.0
+pytest-asyncio>=0.21.0  # 异步测试支持
+
 # HTTP客户端（前端客户端使用）
 requests>=2.31.0
 

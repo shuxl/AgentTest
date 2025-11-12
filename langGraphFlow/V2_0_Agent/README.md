@@ -4,41 +4,66 @@
 
 ```
 V2_0_Agent/
-├── utils/
+├── app/                       # 应用入口模块
 │   ├── __init__.py
-│   ├── config.py              # 配置管理模块
-│   ├── llms.py                # LLM初始化模块
-│   ├── database.py            # 数据库连接池管理模块
-│   ├── redis_manager.py       # Redis连接管理模块
-│   ├── logging_config.py      # 日志配置模块
-│   ├── router_state.py        # 路由状态数据结构
-│   ├── router.py              # 路由节点实现
-│   ├── router_graph.py        # 路由图创建
-│   ├── agents/                # 专门智能体模块
-│   │   ├── __init__.py
-│   │   ├── blood_pressure_agent.py  # 血压记录智能体实现
-│   │   └── appointment_agent.py     # 复诊管理智能体实现
-│   └── tools/                 # 工具模块
+│   ├── main.py                # 后端服务入口
+│   ├── client.py              # 前端客户端入口
+│   └── api/                   # API模块
 │       ├── __init__.py
-│       ├── router_tools.py    # 路由工具实现
-│       ├── blood_pressure_tools.py  # 血压记录工具实现
-│       └── appointment_tools.py     # 复诊管理工具实现
-├── test/                      # 测试目录
+│       ├── routes.py          # API路由定义
+│       └── models.py          # API数据模型
+├── core/                      # 核心基础代码模块
 │   ├── __init__.py
-│   ├── test_readme.md         # 测试文档说明
-│   ├── router/                # 路由功能测试
-│   │   └── test_router.py     # 路由单元测试
-│   ├── blood_pressure/        # 血压记录智能体测试
-│   │   └── test_blood_pressure_integration.py  # 血压记录集成测试
-│   ├── appointment/           # 复诊管理智能体测试
-│   │   └── test_appointment_integration.py     # 复诊管理集成测试
-│   └── infrastructure/        # 基础设施测试（预留）
+│   └── config/                # 配置管理模块
+│       ├── __init__.py
+│       ├── base.py            # 配置基类
+│       ├── settings.py        # 项目配置
+│       └── validators.py      # 配置验证器
+├── domain/                    # 业务代码模块
+│   ├── __init__.py
+│   ├── router/                # 路由业务模块
+│   │   ├── __init__.py
+│   │   ├── state.py           # 路由状态定义
+│   │   ├── node.py            # 路由节点实现
+│   │   ├── graph.py           # 路由图创建
+│   │   └── tools/             # 路由工具
+│   ├── agents/                # 智能体业务模块
+│   │   ├── __init__.py
+│   │   ├── blood_pressure/    # 血压记录智能体
+│   │   ├── appointment/       # 复诊管理智能体
+│   │   └── diagnosis/         # 诊断智能体
+│   ├── models/                # 数据模型模块
+│   │   ├── __init__.py
+│   │   ├── base.py            # 基础模型
+│   │   ├── crud.py            # CRUD操作
+│   │   └── schemas/           # 数据模式
+│   └── rag/                   # RAG模块
+│       ├── __init__.py
+│       ├── knowledge_base_manager.py
+│       └── ...
+├── infrastructure/            # 基础设施模块
+│   ├── __init__.py
+│   ├── database/              # 数据库基础设施
+│   │   ├── __init__.py
+│   │   └── migrations/        # 数据库迁移
+│   └── storage/               # 存储基础设施
+│       └── __init__.py
+├── tests/                     # 测试目录
+│   ├── __init__.py
+│   ├── conftest.py            # pytest配置和fixtures
+│   ├── unit/                  # 单元测试
+│   ├── integration/           # 集成测试
+│   └── e2e/                   # 端到端测试
+├── utils/                     # 工具模块（向后兼容层）
+│   ├── __init__.py
+│   ├── config.py              # 配置模块（向后兼容）
+│   ├── database.py            # 数据库管理（待迁移）
+│   ├── redis_manager.py       # Redis管理（待迁移）
+│   └── ...
 ├── scripts/                   # 数据库脚本目录
-│   ├── create_blood_pressure_table.py  # 创建血压记录表脚本
-│   └── create_appointment_table.py     # 创建复诊预约表脚本
+│   ├── create_blood_pressure_table.py
+│   └── create_appointment_table.py
 ├── logfile/                   # 日志文件目录（.gitignore）
-├── 01_backendServer.py        # 后端服务入口
-├── 02_frontendServer.py       # 前端服务入口
 ├── generate_lock.py           # 依赖锁定文件生成脚本
 ├── requirements.txt           # 依赖包列表
 └── requirements.lock          # 依赖锁定文件
@@ -75,9 +100,31 @@ export LLM_TYPE="deepseek-chat"
 export LLM_TEMPERATURE="0"
 ```
 
+## 启动服务
+
+### 启动后端服务
+
+```bash
+# 激活conda环境
+conda activate py_311_rag
+
+# 启动后端服务
+conda run -n py_311_rag python app/main.py
+```
+
+### 启动前端客户端
+
+```bash
+# 激活conda环境
+conda activate py_311_rag
+
+# 启动前端客户端（需要先启动后端服务）
+conda run -n py_311_rag python app/client.py
+```
+
 ## 测试
 
-测试文件已整理到 `test/` 目录下，详细说明请参考 [test/test_readme.md](test/test_readme.md)。
+测试文件已整理到 `tests/` 目录下，详细说明请参考 [tests/test_readme.md](tests/test_readme.md)。
 
 ### 运行测试
 
@@ -86,13 +133,13 @@ export LLM_TEMPERATURE="0"
 conda activate py_311_rag
 
 # 路由功能单元测试（不需要数据库）
-conda run -n py_311_rag python test/router/test_router.py
+conda run -n py_311_rag python tests/unit/router/test_router.py
 
 # 血压记录集成测试（需要数据库和LLM API）
-conda run -n py_311_rag python test/blood_pressure/test_blood_pressure_integration.py
+conda run -n py_311_rag python tests/integration/blood_pressure/test_blood_pressure_integration.py
 
 # 复诊管理集成测试（需要数据库和LLM API）
-conda run -n py_311_rag python test/appointment/test_appointment_integration.py
+conda run -n py_311_rag python tests/integration/appointment/test_appointment_integration.py
 ```
 
 ### 数据库表初始化
@@ -109,7 +156,7 @@ conda run -n py_311_rag python scripts/create_appointment_table.py
 
 - **路由功能测试**: 单元测试，测试路由核心逻辑，不依赖数据库
 - **集成测试**: 需要数据库连接和LLM API配置，测试完整的智能体交互流程
-- 详细测试文档请参考 [test/test_readme.md](test/test_readme.md)
+- 详细测试文档请参考 [tests/test_readme.md](tests/test_readme.md)
 
 ## 模块说明
 

@@ -1,16 +1,29 @@
 """
-数据库连接池管理模块
-提供PostgreSQL数据库连接池的创建和管理功能
-统一管理 psycopg_pool（LangGraph）和 SQLAlchemy 的连接池
+数据库连接池管理模块（向后兼容层）
+此模块已迁移到 core.database，保留此文件以保持向后兼容
+建议新代码使用：from core.database import get_db_pool, DatabasePool
 """
+import warnings
 import logging
+from typing import Optional
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import dict_row
-from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from .config import Config
+from core.database import DatabasePool as CoreDatabasePool, get_db_pool as _get_db_pool
+from core.config import get_settings
+
+# 发出警告，提示使用新模块
+warnings.warn(
+    "utils.database 已迁移到 core.database，"
+    "建议使用：from core.database import get_db_pool, DatabasePool",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 logger = logging.getLogger(__name__)
+
+# 向后兼容：重新导出
+__all__ = ["DatabasePool", "get_db_pool"]
 
 
 class DatabasePool:
@@ -43,10 +56,12 @@ class DatabasePool:
         """
         try:
             if self._pool is None:
+                # 获取配置
+                settings = get_settings()
                 # 设置连接工厂，在每次创建连接时设置时区
                 async def configure_connection(conn):
                     async with conn.cursor() as cur:
-                        await cur.execute(f"SET timezone = '{Config.DB_TIMEZONE}';")
+                        await cur.execute(f"SET timezone = '{settings.db_timezone}';")
                 
                 self._pool = AsyncConnectionPool(
                     conninfo=self.db_uri,
@@ -59,7 +74,7 @@ class DatabasePool:
                 await self._pool.open()
                 logger.info(
                     f"LangGraph 数据库连接池创建成功 "
-                    f"(min_size={self.min_size}, max_size={self.max_size}, timezone={Config.DB_TIMEZONE})"
+                    f"(min_size={self.min_size}, max_size={self.max_size}, timezone={settings.db_timezone})"
                 )
             
             # 同时初始化 SQLAlchemy Engine（确保配置一致）
@@ -74,6 +89,8 @@ class DatabasePool:
         """初始化 SQLAlchemy 引擎（确保与 LangGraph 连接池配置一致）"""
         try:
             if self._sqlalchemy_engine is None:
+                # 获取配置
+                settings = get_settings()
                 # 转换连接字符串：postgresql:// -> postgresql+psycopg://
                 if self.db_uri.startswith("postgresql://"):
                     sqlalchemy_uri = self.db_uri.replace("postgresql://", "postgresql+psycopg://", 1)
@@ -91,13 +108,13 @@ class DatabasePool:
                     max_overflow=self.max_size - self.min_size,  # 最大溢出连接数
                     # 连接工厂：设置时区（与 LangGraph 一致）
                     connect_args={
-                        "options": f"-c timezone={Config.DB_TIMEZONE}"
+                        "options": f"-c timezone={settings.db_timezone}"
                     }
                 )
                 logger.info(
                     f"SQLAlchemy 异步引擎创建成功 "
                     f"(pool_size={self.min_size}, max_overflow={self.max_size - self.min_size}, "
-                    f"timezone={Config.DB_TIMEZONE})"
+                    f"timezone={settings.db_timezone})"
                 )
         except Exception as e:
             logger.error(f"SQLAlchemy 引擎初始化失败: {str(e)}")
@@ -186,10 +203,11 @@ def get_db_pool() -> DatabasePool:
     """
     global _db_pool
     if _db_pool is None:
+        settings = get_settings()
         _db_pool = DatabasePool(
-            db_uri=Config.DB_URI,
-            min_size=Config.MIN_SIZE,
-            max_size=Config.MAX_SIZE
+            db_uri=settings.db_uri,
+            min_size=settings.db_min_size,
+            max_size=settings.db_max_size
         )
     return _db_pool
 

@@ -9,7 +9,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import SystemMessage
 from psycopg_pool import AsyncConnectionPool
-from ..router_state import RouterState
+from domain.router import RouterState
 from ..tools.blood_pressure_tools import create_blood_pressure_tools
 from ..llms import get_llm_by_config
 

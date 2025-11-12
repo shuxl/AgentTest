@@ -1,51 +1,159 @@
-import os
+"""
+配置模块（向后兼容层）
+此模块已迁移到 core.config.Settings，保留此文件以保持向后兼容
+建议新代码使用：from core.config import Settings
+"""
+import warnings
+from core.config import get_settings
+
+# 获取新的配置实例
+_settings = get_settings()
 
 
 class Config:
-    """统一的配置类，集中管理所有常量"""
+    """
+    统一的配置类（向后兼容层）
+    
+    注意：此类的实现已迁移到 core.config.Settings
+    建议新代码使用：from core.config import Settings, get_settings
+    """
     
     # 日志持久化存储
-    LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logfile", "app.log")
-    log_dir = os.path.dirname(LOG_FILE)
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    MAX_BYTES = 5 * 1024 * 1024
-    BACKUP_COUNT = 3
+    @property
+    def LOG_FILE(self):
+        """日志文件路径"""
+        return _settings.LOG_FILE
+    
+    @property
+    def MAX_BYTES(self):
+        """日志文件最大字节数"""
+        return _settings.MAX_BYTES
+    
+    @property
+    def BACKUP_COUNT(self):
+        """日志备份文件数量"""
+        return _settings.BACKUP_COUNT
 
     # PostgreSQL数据库配置参数
-    DB_URI = os.getenv("DB_URI", "postgresql://postgres:sxl_pwd_123@localhost:5433/doctor_agent_db?sslmode=disable")
-    DB_TIMEZONE = os.getenv("DB_TIMEZONE", "Asia/Shanghai")  # 数据库时区设置
-    MIN_SIZE = 5  # 连接池最小连接数
-    MAX_SIZE = 10  # 连接池最大连接数
+    @property
+    def DB_URI(self):
+        """PostgreSQL数据库连接URI"""
+        return _settings.DB_URI
+    
+    @property
+    def DB_TIMEZONE(self):
+        """数据库时区设置"""
+        return _settings.DB_TIMEZONE
+    
+    @property
+    def MIN_SIZE(self):
+        """连接池最小连接数"""
+        return _settings.MIN_SIZE
+    
+    @property
+    def MAX_SIZE(self):
+        """连接池最大连接数"""
+        return _settings.MAX_SIZE
 
     # Redis数据库配置参数
-    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_DB = int(os.getenv("REDIS_DB", "0"))
-    SESSION_TIMEOUT = int(os.getenv("SESSION_TIMEOUT", "3600"))  # 会话超时时间（秒）
-    TTL = int(os.getenv("REDIS_TTL", "3600"))  # Redis键过期时间（秒）
+    @property
+    def REDIS_HOST(self):
+        """Redis服务器地址"""
+        return _settings.REDIS_HOST
+    
+    @property
+    def REDIS_PORT(self):
+        """Redis服务器端口"""
+        return _settings.REDIS_PORT
+    
+    @property
+    def REDIS_DB(self):
+        """Redis数据库编号"""
+        return _settings.REDIS_DB
+    
+    @property
+    def SESSION_TIMEOUT(self):
+        """会话超时时间（秒）"""
+        return _settings.SESSION_TIMEOUT
+    
+    @property
+    def TTL(self):
+        """Redis键过期时间（秒）"""
+        return _settings.TTL
 
-    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-    TASK_TTL = int(os.getenv("TASK_TTL", "3600"))  # 任务过期时间（秒）
+    @property
+    def CELERY_BROKER_URL(self):
+        """Celery Broker URL"""
+        return _settings.CELERY_BROKER_URL
+    
+    @property
+    def TASK_TTL(self):
+        """任务过期时间（秒）"""
+        return _settings.TASK_TTL
 
     # LLM配置
-    # openai:调用gpt模型,qwen:调用阿里通义千问大模型,oneapi:调用oneapi方案支持的模型,ollama:调用本地开源大模型
-    LLM_TYPE = os.getenv("LLM_TYPE", "deepseek-chat")
-    # LLM温度参数
-    LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
-    # LLM API Key的环境变量名称
-    LLM_API_KEY_ENV_NAME = os.getenv("LLM_API_KEY_ENV_NAME", "DEEPSEEK_API_KEY")
+    @property
+    def LLM_TYPE(self):
+        """LLM类型"""
+        return _settings.LLM_TYPE
+    
+    @property
+    def LLM_TEMPERATURE(self):
+        """LLM温度参数"""
+        return _settings.LLM_TEMPERATURE
+    
+    @property
+    def LLM_API_KEY_ENV_NAME(self):
+        """LLM API Key环境变量名称"""
+        return _settings.LLM_API_KEY_ENV_NAME
 
     # API服务地址和端口
-    HOST = os.getenv("HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", "8001"))
+    @property
+    def HOST(self):
+        """服务监听地址"""
+        return _settings.HOST
+    
+    @property
+    def PORT(self):
+        """服务监听端口"""
+        return _settings.PORT
 
     # 路由配置
-    INTENT_CONFIDENCE_THRESHOLD = float(os.getenv("INTENT_CONFIDENCE_THRESHOLD", "0.7"))  # 意图识别置信度阈值
-    MAX_DIALOGUE_ROUNDS = int(os.getenv("MAX_DIALOGUE_ROUNDS", "100"))  # 最大对话轮数
+    @property
+    def INTENT_CONFIDENCE_THRESHOLD(self):
+        """意图识别置信度阈值"""
+        return _settings.INTENT_CONFIDENCE_THRESHOLD
+    
+    @property
+    def MAX_DIALOGUE_ROUNDS(self):
+        """最大对话轮数"""
+        return _settings.MAX_DIALOGUE_ROUNDS
 
     # Java微服务配置（预留）
-    JAVA_SERVICE_BASE_URL = os.getenv("JAVA_SERVICE_BASE_URL", "http://localhost:8080")
-    JAVA_SERVICE_TIMEOUT = int(os.getenv("JAVA_SERVICE_TIMEOUT", "30"))  # 超时时间（秒）
-    JAVA_SERVICE_API_KEY = os.getenv("JAVA_SERVICE_API_KEY", "")  # API认证密钥
+    @property
+    def JAVA_SERVICE_BASE_URL(self):
+        """Java微服务基础URL"""
+        return _settings.JAVA_SERVICE_BASE_URL
+    
+    @property
+    def JAVA_SERVICE_TIMEOUT(self):
+        """Java微服务超时时间（秒）"""
+        return _settings.JAVA_SERVICE_TIMEOUT
+    
+    @property
+    def JAVA_SERVICE_API_KEY(self):
+        """Java微服务API认证密钥"""
+        return _settings.JAVA_SERVICE_API_KEY
+
+
+# 创建全局Config实例（向后兼容）
+Config = Config()
+
+# 发出警告，提示使用新模块
+warnings.warn(
+    "utils.config.Config 已迁移到 core.config.Settings，"
+    "建议使用：from core.config import Settings, get_settings",
+    DeprecationWarning,
+    stacklevel=2
+)
 

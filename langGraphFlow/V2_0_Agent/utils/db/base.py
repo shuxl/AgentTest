@@ -11,7 +11,8 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 from sqlalchemy.orm import declarative_base
-from ..database import get_db_pool
+# 使用新的数据库管理模块
+from core.database import get_db_pool
 
 logger = logging.getLogger(__name__)
 

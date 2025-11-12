@@ -1,13 +1,31 @@
 """
-Redis连接管理模块
-提供Redis连接和会话管理功能
+Redis连接管理模块（向后兼容层）
+此模块已迁移到 core.cache，保留此文件以保持向后兼容
+建议新代码使用：from core.cache import get_redis_manager, RedisManager
 """
-import logging
-import redis.asyncio as redis
-from typing import Optional
-from .config import Config
+import warnings
+from core.cache import RedisManager, get_redis_manager as _get_redis_manager
 
-logger = logging.getLogger(__name__)
+# 发出警告，提示使用新模块
+warnings.warn(
+    "utils.redis_manager 已迁移到 core.cache，"
+    "建议使用：from core.cache import get_redis_manager, RedisManager",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# 向后兼容：重新导出
+__all__ = ["RedisManager", "get_redis_manager"]
+
+
+def get_redis_manager():
+    """
+    获取全局Redis管理器实例（向后兼容）
+    
+    Returns:
+        RedisManager: Redis管理器实例
+    """
+    return _get_redis_manager()
 
 
 class RedisManager:

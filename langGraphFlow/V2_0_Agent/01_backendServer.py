@@ -19,11 +19,11 @@ from langgraph.store.postgres import AsyncPostgresStore
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-from utils.config import Config
-from utils.database import get_db_pool
-from utils.redis_manager import get_redis_manager
-from utils.router_graph import create_router_agent
-from utils.logging_config import setup_logging
+from core.config import get_settings
+from core.database import get_db_pool
+from core.cache import get_redis_manager
+from domain.router import create_router_agent
+from core.logging import setup_logging
 
 # 设置统一的日志配置（必须在导入其他模块之前调用）
 setup_logging()
@@ -241,5 +241,6 @@ async def db_health_check():
 
 # 启动服务器
 if __name__ == "__main__":
-    uvicorn.run(app, host=Config.HOST, port=Config.PORT)
+    settings = get_settings()
+    uvicorn.run(app, host=settings.host, port=settings.port)
 
